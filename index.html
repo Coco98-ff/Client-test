@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GestiStock Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;font-size:14px}
+#auth{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a3a2a,#2d6a4f,#52b788)}
+.abox{background:#fff;border-radius:16px;padding:32px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.alogo{font-size:24px;font-weight:800;color:#2d6a4f;margin-bottom:4px}.alogo span{color:#d4a017}
+.asub{color:#7a7a6e;font-size:12px;margin-bottom:20px}
+.atabs{display:flex;background:#f5f4f0;border-radius:8px;padding:3px;margin-bottom:18px}
+.atab{flex:1;padding:7px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:#7a7a6e;border-radius:6px}
+.atab.on{background:#fff;color:#2d6a4f;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.fl{margin-bottom:12px}.fl label{display:block;font-size:11px;font-weight:700;color:#7a7a6e;margin-bottom:4px;text-transform:uppercase}
+.fi,.fs{width:100%;padding:9px 12px;border:1.5px solid #e8e5de;border-radius:7px;font-size:14px;outline:none;font-family:inherit;background:#fff}
+.fi:focus,.fs:focus{border-color:#2d6a4f}
+.bauth{width:100%;padding:11px;background:#2d6a4f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit}
+.bauth:disabled{opacity:.6}
+.hint{font-size:11px;color:#7a7a6e;margin-top:12px;padding:8px;background:#f5f4f0;border-radius:6px;line-height:1.6}
+#app{display:none}
+.sb{width:210px;background:#2d6a4f;position:fixed;top:0;left:0;bottom:0;z-index:200;display:flex;flex-direction:column;transform:translateX(-100%);transition:.25s}
+@media(min-width:700px){.sb{transform:translateX(0)!important}.main{margin-left:210px}.mbtn{display:none!important}}
+.sbl{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.15)}
+.sbn{font-size:18px;font-weight:800;color:#fff}.sbn span{color:#d4a017}
+.nav{padding:10px 8px;flex:1;overflow-y:auto}
+.ns{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;padding:10px 8px 4px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;color:rgba(255,255,255,.75);font-size:13px;font-weight:500;margin-bottom:1px;transition:.15s}
+.ni:hover,.ni.on{background:rgba(255,255,255,.15);color:#fff}
+.nbadge{margin-left:auto;background:#d4a017;color:#000;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;display:none}
+.sbu{padding:12px 14px;border-top:1px solid rgba(255,255,255,.15)}
+.sbun{font-size:13px;color:#fff;font-weight:600}.sbur{font-size:11px;color:rgba(255,255,255,.5)}
+.blg{width:100%;padding:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;color:rgba(255,255,255,.8);font-size:12px;cursor:pointer;margin-top:6px;font-family:inherit}
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid #e8e5de;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.mbtn{background:none;border:none;font-size:22px;cursor:pointer;padding:2px 6px}
+.ptit{font-size:17px;font-weight:700}
+.tbr{display:flex;gap:8px}
+.cnt{padding:16px 20px;flex:1}
+.pg{display:none}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}
+@media(min-width:600px){.sg{grid-template-columns:repeat(4,1fr)}}
+.sc{background:#fff;border:1.5px solid #e8e5de;border-radius:10px;padding:14px;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc.g::before{background:#52b788}.sc.y::before{background:#d4a017}.sc.r::before{background:#c0392b}.sc.b::before{background:#1a6b9a}
+.sl{font-size:10px;font-weight:700;color:#7a7a6e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sv{font-size:26px;font-weight:800}.sv.g{color:#2d6a4f}.sv.y{color:#d4a017}.sv.r{color:#c0392b}.sv.b{color:#1a6b9a}
+.ss{font-size:11px;color:#7a7a6e;margin-top:3px}
+.panel{background:#fff;border:1.5px solid #e8e5de;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.ph{padding:14px 16px;border-bottom:1px solid #e8e5de;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pt{font-size:14px;font-weight:700}
+.pa{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+input.sr,select.sr{background:#f5f4f0;border:1.5px solid #e8e5de;border-radius:7px;padding:7px 10px;font-size:13px;outline:none;font-family:inherit}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#7a7a6e;background:#f5f4f0;font-weight:700;border-bottom:1px solid #e8e5de}
+td{padding:11px 14px;font-size:13px;border-top:1px solid #e8e5de;vertical-align:middle}
+tr:hover td{background:#fafaf5}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700}
+.btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;display:inline-flex;align-items:center;gap:4px}
+.bp{background:#2d6a4f;color:#fff}
+.bs{background:#fff;color:#1a1a1a;border:1.5px solid #e8e5de}
+.bd{background:#fce8e6;color:#c0392b;border:1px solid #f5c0bb}
+.bw{background:#fef9e7;color:#b7770d;border:1px solid #f5e4a1}
+.bxs{padding:4px 8px;font-size:11px}
+.ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
+.ovl.op{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.mt{font-size:16px;font-weight:700;margin-bottom:16px}
+.fg{margin-bottom:12px}
+.fl2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fl3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.flb{display:block;font-size:11px;font-weight:700;color:#7a7a6e;margin-bottom:4px;text-transform:uppercase}
+.fta{width:100%;padding:9px 12px;border:1.5px solid #e8e5de;border-radius:7px;font-size:13px;outline:none;font-family:inherit;background:#fff;resize:vertical;min-height:60px}
+.mf{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid #e8e5de}
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;max-width:280px;color:#fff}
+.tok{background:#2d6a4f}.terr{background:#c0392b}.twarn{background:#b7770d}
+.empty{text-align:center;padding:32px;color:#7a7a6e}
+.sbbg{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.4)}
+.mtb{display:flex;gap:8px;margin-bottom:14px}
+.loading{text-align:center;padding:60px;color:#7a7a6e}
+</style>
+</head>
+<body>
+
+<div id="auth">
+<div class="abox">
+  <div class="alogo">Gesti<span>Stock</span> Pro</div>
+  <div class="asub">Gestion de stock multi-depots</div>
+  <div class="atabs">
+    <button class="atab on" onclick="switchTab('login')">Connexion</button>
+    <button class="atab" onclick="switchTab('reg')">Creer compte</button>
+  </div>
+  <div id="loginForm">
+    <div class="fl"><label>Email</label><input class="fi" id="le" type="email" placeholder="vous@email.com"></div>
+    <div class="fl"><label>Mot de passe</label><input class="fi" id="lp" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="bauth" id="btnLogin" onclick="doLogin()">Se connecter</button>
+    <div id="lmsg" style="color:#c0392b;font-size:12px;margin-top:8px;text-align:center"></div>
+  </div>
+  <div id="regForm" style="display:none">
+    <div class="fl"><label>Nom de l'entreprise</label><input class="fi" id="rcompany" placeholder="Ex: Pharmacie Alpha"></div>
+    <div class="fl"><label>Votre nom</label><input class="fi" id="rn" placeholder="Prenom Nom"></div>
+    <div class="fl"><label>Email</label><input class="fi" id="re" type="email" placeholder="email@..."></div>
+    <div class="fl"><label>Mot de passe</label><input class="fi" id="rp" type="password" placeholder="Min. 6 caracteres"></div>
+    <button class="bauth" id="btnReg" onclick="doRegister()">Creer mon compte</button>
+    <div id="rm" style="font-size:12px;margin-top:8px;text-align:center"></div>
+  </div>
+</div>
+</div>
+
+<div class="sbbg" id="sbbg" onclick="closeSB()"></div>
+<div id="app">
+<div class="sb" id="sb">
+  <div class="sbl"><div class="sbn">Gesti<span>Stock</span> Pro</div></div>
+  <div class="nav">
+    <div class="ns">Principal</div>
+    <div class="ni on" data-p="dashboard" onclick="showPage('dashboard',this)">📊 Tableau de bord</div>
+    <div class="ni" data-p="produits" onclick="showPage('produits',this)">📦 Produits</div>
+    <div class="ni" data-p="mouvements" onclick="showPage('mouvements',this)">🔄 Mouvements</div>
+    <div class="ns">Gestion</div>
+    <div class="ni" data-p="factures" onclick="showPage('factures',this)">🧾 Factures</div>
+    <div class="ni" data-p="alertes" onclick="showPage('alertes',this)">🔔 Alertes <span class="nbadge" id="abadge">0</span></div>
+    <div class="ns adm">Admin</div>
+    <div class="ni adm" data-p="depots" onclick="showPage('depots',this)">🏪 Depots</div>
+    <div class="ni adm" data-p="utilisateurs" onclick="showPage('utilisateurs',this)">👥 Equipe</div>
+  </div>
+  <div class="sbu">
+    <div class="sbun" id="uname">—</div>
+    <div class="sbur" id="urole">—</div>
+    <button class="blg" onclick="doLogout()">Deconnexion</button>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="mbtn" onclick="openSB()">☰</button>
+      <div class="ptit" id="ptitle">Tableau de bord</div>
+    </div>
+    <div class="tbr">
+      <button class="btn bp" id="btnAdd" onclick="openProdModal()">+ Produit</button>
+    </div>
+  </div>
+  <div class="cnt">
+
+    <div class="pg" id="pg-dashboard">
+      <div class="sg">
+        <div class="sc g"><div class="sl">En stock</div><div class="sv g" id="d-ok">0</div><div class="ss" id="d-oks">—</div></div>
+        <div class="sc y"><div class="sl">Stock faible</div><div class="sv y" id="d-low">0</div><div class="ss">sous le seuil</div></div>
+        <div class="sc r"><div class="sl">Ruptures</div><div class="sv r" id="d-out">0</div><div class="ss">a commander</div></div>
+        <div class="sc b"><div class="sl">Valeur stock</div><div class="sv b" id="d-val">0</div><div class="ss">FCFA</div></div>
+      </div>
+      <div class="panel"><div class="ph"><div class="pt">Produits a surveiller</div></div><div id="watchlist"><div class="loading">Chargement...</div></div></div>
+    </div>
+
+    <div class="pg" id="pg-produits">
+      <div class="panel">
+        <div class="ph"><div class="pt">Catalogue produits</div>
+          <div class="pa">
+            <input class="sr" placeholder="Rechercher..." oninput="renderProds(this.value)" style="width:150px">
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Produit</th><th>Cat.</th><th>Depot</th><th>Qte</th><th>Seuil</th><th>P.Vente</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="ptbody"><tr><td colspan="8"><div class="loading">Chargement...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-mouvements">
+      <div class="panel" id="mvtForm">
+        <div class="ph"><div class="pt">Enregistrer un mouvement</div></div>
+        <div style="padding:16px">
+          <div id="mvtmsg" style="color:#c0392b;font-size:12px;margin-bottom:8px"></div>
+          <div class="mtb">
+            <button class="btn bp" id="mbin" onclick="setMvt('entree')">⬆ Entree</button>
+            <button class="btn bs" id="mbout" onclick="setMvt('sortie')">⬇ Sortie</button>
+          </div>
+          <div class="fl3">
+            <div class="fg"><label class="flb">Produit</label><select class="fs" id="mvtprod" onchange="updMvtInfo()"><option value="">Choisir...</option></select></div>
+            <div class="fg"><label class="flb">Quantite</label><input type="number" class="fi" id="mvtqty" min="1" placeholder="0"><div style="font-size:11px;color:#7a7a6e;margin-top:2px" id="mvtinfo"></div></div>
+          </div>
+          <div class="fl2">
+            <div class="fg"><label class="flb">Reference</label><input class="fi" id="mvtref" placeholder="N° BL, raison..."></div>
+            <div class="fg"><label class="flb">Date</label><input type="date" class="fi" id="mvtdate"></div>
+          </div>
+          <button class="btn bp" onclick="saveMvt()">Enregistrer</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="pt">Historique</div></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Produit</th><th>Qte</th><th>Ref.</th><th>Par</th></tr></thead><tbody id="mvtbody"><tr><td colspan="6"><div class="loading">Chargement...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-factures">
+      <div class="panel">
+        <div class="ph"><div class="pt">Factures & Bons</div><button class="btn bp" onclick="openFactModal()">+ Nouvelle facture</button></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total</th><th>Type</th><th>Actions</th></tr></thead><tbody id="factbody"><tr><td colspan="6"><div class="loading">Chargement...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-alertes">
+      <div class="panel"><div class="ph"><div class="pt">Produits a surveiller</div></div><div id="alertlist"><div class="loading">Chargement...</div></div></div>
+    </div>
+
+    <div class="pg" id="pg-depots">
+      <div class="panel">
+        <div class="ph"><div class="pt">Gestion des depots</div><button class="btn bp" onclick="openDepotModal()">+ Nouveau depot</button></div>
+        <table><thead><tr><th>Nom</th><th>Adresse</th><th>Responsable</th><th>Produits</th><th>Actions</th></tr></thead><tbody id="dbody"><tr><td colspan="5"><div class="loading">Chargement...</div></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-utilisateurs">
+      <div class="panel">
+        <div class="ph"><div class="pt">Equipe</div></div>
+        <div style="padding:16px">
+          <div class="hint">Pour ajouter un membre a votre equipe, demandez-lui de creer un compte avec le lien de votre application. Vous pourrez ensuite lui assigner un role.</div>
+        </div>
+        <table><thead><tr><th>Nom</th><th>Role</th><th>Membre depuis</th></tr></thead><tbody id="ubody"><tr><td colspan="3"><div class="loading">Chargement...</div></td></tr></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
