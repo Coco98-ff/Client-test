@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GestiStock Pro - Connexion</title>
+    <!-- Intégration des icônes Lucide pour un rendu moderne -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #2d6a4f;
+            --primary-hover: #1b4332;
+            --bg-gradient: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #52b788 100%);
+            --gray-light: #f8f9fa;
+            --gray-text: #6c757d;
+            --border-color: #e9ecef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Cercles décoratifs en arrière-plan pour créer de la profondeur */
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(80px);
+            z-index: 1;
+        }
+        .circle-1 { width: 300px; height: 300px; top: -50px; right: -50px; }
+        .circle-2 { width: 250px; height: 250px; bottom: -50px; left: -50px; }
+
+        /* Conteneur principal */
+        .login-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 24px;
+            padding: 40px 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            z-index: 10;
+            position: relative;
+        }
+
+        /* En-tête */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .brand-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .brand-title span {
+            color: #d8f3dc;
+            background: var(--primary);
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-left: 4px;
+        }
+        .brand-subtitle {
+            font-size: 14px;
+            color: var(--gray-text);
+            margin-top: 6px;
+        }
+
+        /* Onglets Connexion / Créer compte */
+        .tabs-container {
+            display: flex;
+            background: #f1f3f5;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+        }
+        .tab-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-text);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Formulaire */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--gray-text);
+            width: 18px;
+            height: 18px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 14px 14px 14px 44px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.2s ease;
+            color: #212529;
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.1);
+        }
+        
+        /* Icône de visibilité du mot de passe */
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            color: var(--gray-text);
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            border: none;
+            background: transparent;
+        }
+
+        /* Liens et boutons */
+        .forgot-password {
+            display: block;
+            text-align: right;
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: -12px;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+        .forgot-password:hover {
+            text-decoration: underline;
+            color: var(--primary-hover);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(45, 106, 79, 0.2);
+        }
+        .submit-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(45, 106, 79, 0.3);
+        }
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-circle circle-1"></div>
+    <div class="bg-circle circle-2"></div>
+
+    <div class="login-card">
+        <div class="brand-header">
+            <h1 class="brand-title">GestiStock<span>Pro</span></h1>
+            <p class="brand-subtitle">Gestion de stock multi-dépôts</p>
+        </div>
+
+        <div class="tabs-container">
+            <button class="tab-btn active">Connexion</button>
+            <button class="tab-btn">Créer compte</button>
+        </div>
+
+        <form>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <div class="input-wrapper">
+                    <i data-lucide="mail" class="input-icon"></i>
+                    <input type="email" class="form-input" placeholder="vous@email.com" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Mot de passe</label>
+                <div class="input-wrapper">
+                    <i data-lucide="lock" class="input-icon"></i>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <i data-lucide="eye" id="password-icon" style="width: 18px; height: 18px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+
+            <button type="submit" class="submit-btn">Se connecter</button>
+        </form>
+    </div>
+
+    <script>
+        // Initialisation des icônes Lucide
+        lucide.createIcons();
+
+        // Fonction pour afficher/masquer le mot de passe
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('password-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons(); // Réinitialise l'icône modifiée
+        }
+    </script>
+</body>
+</html>
