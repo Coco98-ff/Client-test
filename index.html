@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Espace Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        #auth {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .abox {
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            color: #1e293b;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .alogo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #2d6a4f;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .asub {
+            color: #7a7a6e;
+            font-size: 12px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .atabs {
+            display: flex;
+            background: #f5f4f0;
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .atab {
+            flex: 1;
+            padding: 7px;
+            border: none;
+            background: none;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+        .atab.on {
+            background: #fff;
+            color: #2d6a4f;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .fl {
+            margin-bottom: 12px;
+        }
+        .fl label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+        .fi, .fs {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fff;
+            color: #1e293b;
+            transition: 0.2s;
+        }
+        .fi:focus, .fs:focus {
+            outline: none;
+            border-color: #2d6a4f;
+        }
+        .bauth {
+            width: 100%;
+            padding: 11px;
+            background: #2d6a4f;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.2s;
+        }
+        .bauth:hover {
+            background: #1b4332;
+        }
+        .bauth:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+        .hint {
+            font-size: 11px;
+            color: #7a7a6e;
+            margin-top: 12px;
+            text-align: center;
+            min-height: 16px;
+        }
+        
+        /* Espace Application Connectée */
+        #app {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            background: #fff;
+            color: #1e293b;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        @media(min-width: 768px) {
+            #app {
+                display: flex;
+                min-height: 500px;
+            }
+        }
+        .sb {
+            width: 100%;
+            background: #2d6a4f;
+            padding: 25px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        @media(min-width: 768px) {
+            .sb {
+                width: 240px;
+            }
+        }
+        .brand {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 25px;
+        }
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #e2e8f0;
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        .uinfo {
+            font-size: 12px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        .uinfo div {
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .main {
+            flex-grow: 1;
+            padding: 30px;
+            background: #f8fafc;
+        }
+        .panel {
+            display: none;
+        }
+        .panel.active {
+            display: block;
+        }
+        .panel h2 {
+            font-size: 20px;
+            color: #0f172a;
+            margin-bottom: 20px;
+        }
+        .btn-out {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .btn-out:hover {
+            background: #dc2626;
+        }
+        .msg {
+            font-size: 13px;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SECTION DE CONNEXION / INSCRIPTION -->
+    <div id="auth">
+        <div class="abox">
+            <div class="alogo">Mon Espace</div>
+            <div class="asub">Accéder à votre espace personnalisé</div>
+            
+            <div class="atabs">
+                <button type="button" class="atab on" id="tab-login" onclick="setAuthMode('login')">Connexion</button>
+                <button type="button" class="atab" id="tab-register" onclick="setAuthMode('register')">Inscription</button>
+            </div>
+
+            <form id="fauth" onsubmit="handleAuth(event)">
+                <div class="fl" id="f-name" style="display: none;">
+                    <label>Nom complet</label>
+                    <input type="text" id="auth-name" class="fi" placeholder="Ex: Nicole Houansou">
+                </div>
+                <div class="fl">
+                    <label>Adresse e-mail</label>
+                    <input type="email" id="auth-email" class="fi" placeholder="nom@exemple.com" required>
+                </div>
+                <div class="fl">
+                    <label>Mot de passe</label>
+                    <input type="password" id="auth-pwd" class="fi" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="bauth" class="bauth">Se connecter</button>
+                <div id="auth-hint" class="hint"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SECTION INTERNE DE L'APPLICATION -->
+    <div id="app">
+        <aside class="sb">
+            <div>
+                <div class="brand">Mon Espace</div>
+                <nav class="nav">
+                    <button class="nav-btn active" id="n-prof" onclick="switchPanel('prof')">Mon Profil</button>
+                    <button class="nav-btn" id="n-sec" onclick="switchPanel('sec')">Sécurité</button>
+                </nav>
+            </div>
+            <div class="uinfo">
+                <span style="opacity: 0.7;">Connecté en tant que :</span>
+                <div id="u-display">Chargement...</div>
+                <button class="btn-out" onclick="logout()">Déconnexion</button>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- PANEL PROFIL -->
+            <section id="p-prof" class="panel active">
+                <h2>Informations Personnelles</h2>
+                <form onsubmit="updateProfile(event)">
+                    <div class="fl">
+                        <label>Adresse e-mail (Lecture seule)</label>
+                        <input type="text" id="p-email" class="fi" disabled>
+                    </div>
+                    <div class="fl">
+                        <label>Nom complet</label>
+                        <input type="text" id="p-name" class="fi" required>
+                    </div>
+                    <button type="submit" class="bauth" style="width: auto; padding: 10px 20px;">Enregistrer</button>
+                    <div id="prof-msg" class="msg"></div>
+                </form>
+            </section>
+
+            <!-- PANEL SÉCURITÉ -->
+            <section id="p-sec" class="panel">
+                <h2>Sécurité du compte</h2>
+                <form onsubmit="updatePassword(event)">
+                    <div class="fl">
+                        <label>Nouveau mot de passe</label>
+                        <input type="password" id="new-pwd" class="fi" placeholder="Min. 6 caractères" required>
+                    </div>
+                    <div class="fl">
+                        <label>Confirmer le mot de passe</label>
+                        <input type="password" id="new-pwd2" class="fi" placeholder="Confirmer le mot de passe" required>
+                    </div>
+                    <button type="submit" class="bauth" style="width: auto; padding: 10px 20px;">Mettre à jour</button>
+                    <div id="sec-msg" class="msg"></div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- LOGIQUE SUPABASE -->
+    <script>
+        // CONFIGURATION INTÉGRÉE DE TES CLÉS
+        const SUPABASE_URL = "https://mloxyrmsbadmnaesrggu.supabase.co";
+        const SUPABASE_ANON_KEY = "Sb_publishable_OuC9ReKJLp3V6FAc7iOUmw_BN6J-NeS";
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let mode = 'login';
+        let user = null;
+
+        // Gestion automatique de l'état de connexion
+        sb.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                user = session.user;
+                showApp();
+            } else {
+                user = null;
+                showAuth();
+            }
+        });
+
+        function setAuthMode(targetMode) {
+            mode = targetMode;
+            document.getElementById('tab-login').classList.toggle('on', mode === 'login');
+            document.getElementById('tab-register').classList.toggle('on', mode === 'register');
+            document.getElementById('f-name').style.display = mode === 'register' ? 'block' : 'none';
+            document.getElementById('auth-name').required = mode === 'register';
+            document.getElementById('bauth').textContent = mode === 'login' ? 'Se connecter' : 'Créer un compte';
+            document.getElementById('auth-hint').textContent = '';
+        }
+
+        function switchPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`p-${panelId}`).classList.add('active');
+            document.getElementById(`n-${panelId}`).classList.add('active');
+        }
+
+        function showAuth() {
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('auth').style.display = 'flex';
+        }
+
+        async function showApp() {
+            document.getElementById('auth').style.display = 'none';
+            document.getElementById('app').style.display = 'flex';
+            document.getElementById('p-email').value = user.email;
+            document.getElementById('u-display').textContent = user.email;
+
+            // Récupération du profil
+            const { data, error } = await sb.from('profiles').select('nom').eq('id', user.id).single();
+            if (data && data.nom) {
+                document.getElementById('p-name').value = data.nom;
+                document.getElementById('u-display').textContent = data.nom;
+            }
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-pwd').value;
+            const name = document.getElementById('auth-name').value;
+            const hint = document.getElementById('auth-hint');
+            
+            hint.style.color = '#475569';
+            hint.textContent = mode === 'login' ? 'Connexion...' : 'Création du compte...';
+
+            if (mode === 'login') {
+                const { error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) {
+                    hint.style.color = '#ef4444';
+                    hint.textContent = 'Erreur: Identifiants incorrects.';
+                }
+            } else {
+                const { data, error } = await sb.auth.signUp({
+                    email, password,
+                    options: { data: { full_name: name } }
+                });
+                if (error) {
+                    hint.style.color = '#ef4444';
+                    hint.textContent = error.message;
+                } else {
+                    hint.style.color = '#2d6a4f';
+                    hint.textContent = 'Inscription réussie ! Vérifiez vos e-mails.';
+                }
+            }
+        }
+
+        async function updateProfile(e) {
+            e.preventDefault();
+            const nom = document.getElementById('p-name').value;
+            const msg = document.getElementById('prof-msg');
+            
+            msg.style.color = '#475569';
+            msg.textContent = 'Mise à jour...';
+
+            const { error } = await sb.from('profiles').update({ nom }).eq('id', user.id);
+            if (error) {
+                msg.style.color = '#ef4444';
+                msg.textContent = error.message;
+            } else {
+                document.getElementById('u-display').textContent = nom;
+                msg.style.color = '#2d6a4f';
+                msg.textContent = 'Profil enregistré avec succès !';
+            }
+        }
+
+        async function updatePassword(e) {
+            e.preventDefault();
+            const p1 = document.getElementById('new-pwd').value;
+            const p2 = document.getElementById('new-pwd2').value;
+            const msg = document.getElementById('sec-msg');
+
+            if(p1 !== p2) {
+                msg.style.color = '#ef4444';
+                msg.textContent = 'Les mots de passe ne correspondent pas.';
+                return;
+            }
+
+            msg.style.color = '#475569';
+            msg.textContent = 'Modification...';
+
+            const { error } = await sb.auth.updateUser({ password: p1 });
+            if (error) {
+                msg.style.color = '#ef4444';
+                msg.textContent = error.message;
+            } else {
+                document.getElementById('new-pwd').value = '';
+                document.getElementById('new-pwd2').value = '';
+                msg.style.color = '#2d6a4f';
+                msg.textContent = 'Mot de passe modifié avec succès !';
+            }
+        }
+
+        async function logout() {
+            await sb.auth.signOut();
+        }
+    </script>
+</body>
+</html>
