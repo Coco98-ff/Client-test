@@ -1,0 +1,3499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GestiStock Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;font-size:14px}
+#auth{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a3a2a,#2d6a4f,#52b788)}
+.abox{background:#fff;border-radius:16px;padding:32px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.alogo{font-size:24px;font-weight:800;color:#2d6a4f;margin-bottom:4px}.alogo span{color:#d4a017}
+.asub{color:#7a7a6e;font-size:12px;margin-bottom:20px}
+.atabs{display:flex;background:#f5f4f0;border-radius:8px;padding:3px;margin-bottom:18px}
+.atab{flex:1;padding:7px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:#7a7a6e;border-radius:6px}
+.atab.on{background:#fff;color:#2d6a4f;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.fl{margin-bottom:12px}.fl label{display:block;font-size:11px;font-weight:700;color:#7a7a6e;margin-bottom:4px;text-transform:uppercase}
+.fi,.fs{width:100%;padding:9px 12px;border:1.5px solid #e8e5de;border-radius:7px;font-size:14px;outline:none;font-family:inherit;background:#fff}
+.fi:focus,.fs:focus{border-color:#2d6a4f}
+.bauth{width:100%;padding:11px;background:#2d6a4f;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit}
+.bauth:disabled{opacity:.6}
+.hint{font-size:11px;color:#7a7a6e;margin-top:12px;padding:8px;background:#f5f4f0;border-radius:6px;line-height:1.6}
+#app{display:none}
+.sb{width:210px;background:#2d6a4f;position:fixed;top:0;left:0;bottom:0;z-index:200;display:flex;flex-direction:column;transform:translateX(-100%);transition:.25s}
+@media(min-width:700px){.sb{transform:translateX(0)!important}.main{margin-left:210px}.mbtn{display:none!important}}
+.sbl{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.15)}
+.sbn{font-size:18px;font-weight:800;color:#fff}.sbn span{color:#d4a017}
+.nav{padding:10px 8px;flex:1;overflow-y:auto}
+.ns{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;padding:10px 8px 4px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;color:rgba(255,255,255,.75);font-size:13px;font-weight:500;margin-bottom:1px;transition:.15s}
+.ni:hover,.ni.on{background:rgba(255,255,255,.15);color:#fff}
+.nbadge{margin-left:auto;background:#d4a017;color:#000;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;display:none}
+.sbu{padding:12px 14px;border-top:1px solid rgba(255,255,255,.15)}
+.sbun{font-size:13px;color:#fff;font-weight:600}.sbur{font-size:11px;color:rgba(255,255,255,.5)}
+.blg{width:100%;padding:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;color:rgba(255,255,255,.8);font-size:12px;cursor:pointer;margin-top:6px;font-family:inherit}
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid #e8e5de;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.mbtn{background:none;border:none;font-size:22px;cursor:pointer;padding:2px 6px}
+.ptit{font-size:17px;font-weight:700}
+.tbr{display:flex;gap:8px}
+.cnt{padding:16px 20px;flex:1}
+.pg{display:none}
+.sg{grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px;display:grid}
+@media(min-width:600px){.sg{grid-template-columns:repeat(4,1fr)}}
+.sc{background:#fff;border:1.5px solid #e8e5de;border-radius:10px;padding:14px;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc.g::before{background:#52b788}.sc.y::before{background:#d4a017}.sc.r::before{background:#c0392b}.sc.b::before{background:#1a6b9a}
+.sl{font-size:10px;font-weight:700;color:#7a7a6e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sv{font-size:26px;font-weight:800}.sv.g{color:#2d6a4f}.sv.y{color:#d4a017}.sv.r{color:#c0392b}.sv.b{color:#1a6b9a}
+.ss{font-size:11px;color:#7a7a6e;margin-top:3px}
+.panel{background:#fff;border:1.5px solid #e8e5de;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.ph{padding:14px 16px;border-bottom:1px solid #e8e5de;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pt{font-size:14px;font-weight:700}
+.pa{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+input.sr,select.sr{background:#f5f4f0;border:1.5px solid #e8e5de;border-radius:7px;padding:7px 10px;font-size:13px;outline:none;font-family:inherit}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#7a7a6e;background:#f5f4f0;font-weight:700;border-bottom:1px solid #e8e5de}
+td{padding:11px 14px;font-size:13px;border-top:1px solid #e8e5de;vertical-align:middle}
+tr:hover td{background:#fafaf5}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700}
+.btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;display:inline-flex;align-items:center;gap:4px}
+.bp{background:#2d6a4f;color:#fff}
+.bs{background:#fff;color:#1a1a1a;border:1.5px solid #e8e5de}
+.bd{background:#fce8e6;color:#c0392b;border:1px solid #f5c0bb}
+.bw{background:#fef9e7;color:#b7770d;border:1px solid #f5e4a1}
+.bxs{padding:4px 8px;font-size:11px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center}
+.ovl.op{display:flex}
+.modal{background:#fff;border-radius:14px;padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.mt{font-size:16px;font-weight:700;margin-bottom:16px}
+.fg{margin-bottom:12px}
+.fl2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fl3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.flb{display:block;font-size:11px;font-weight:700;color:#7a7a6e;margin-bottom:4px;text-transform:uppercase}
+.fta{width:100%;padding:9px 12px;border:1.5px solid #e8e5de;border-radius:7px;font-size:13px;outline:none;font-family:inherit;background:#fff;resize:vertical;min-height:60px}
+.mf{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid #e8e5de}
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;max-width:280px;color:#fff}
+.tok{background:#2d6a4f}.terr{background:#c0392b}.twarn{background:#b7770d}
+.empty{text-align:center;padding:32px;color:#7a7a6e}
+.sbbg{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.4)}
+.mtb{display:flex;gap:8px;margin-bottom:14px}
+.loading{text-align:center;padding:60px;color:#7a7a6e}
+.ptabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;border-bottom:1px solid #e8e5de;padding-bottom:12px}
+.ptab{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #e8e5de;background:#fff;color:#7a7a6e}
+.ptab.on{background:#2d6a4f;color:#fff;border-color:#2d6a4f}
+.psec{display:none}
+.psec.on{display:block}
+.staticPage{padding:24px;max-width:600px;line-height:1.7;font-size:13px;color:#3a3a3a}
+.staticPage h4{font-size:15px;color:#2d6a4f;margin:18px 0 8px;font-family:Georgia,serif}
+.betaTag{display:inline-block;background:#fef9e7;color:#b7770d;border:1px solid #f5e4a1;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-left:8px}
+@media print{
+  body *{visibility:hidden}
+  #previewContent, #previewContent *{visibility:visible}
+  #previewContent{position:absolute;top:0;left:0;width:100%}
+  .ovl{position:absolute;background:none}
+  .mf,.mt Bour{display:none}
+}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spinAnim .7s linear infinite;margin-right:6px;vertical-align:middle}
+.spin.dark{border:2px solid rgba(45,106,79,.3);border-top-color:#2d6a4f}
+@keyframes spinAnim{to{transform:rotate(360deg)}}
+.confirmOvl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;align-items:center;justify-content:center}
+.confirmOvl.op{display:flex}
+.confirmBox{background:#fff;border-radius:14px;padding:24px;width:340px;max-width:90vw;text-align:center}
+.confirmIcon{font-size:36px;margin-bottom:10px}
+.confirmTitle{font-size:15px;font-weight:700;margin-bottom:8px;color:#1a1a1a}
+.confirmText{font-size:13px;color:#7a7a6e;margin-bottom:18px;line-height:1.5}
+.confirmBtns{display:flex;gap:8px}
+.confirmBtns .btn{flex:1;justify-content:center;padding:10px}
+
+/* --- STYLES AJOUTÉS POUR LA MODALE D'ABONNEMENT --- */
+.sub-modal-grid {display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
+@media(min-width:600px){.sub-modal-grid{grid-template-columns:1fr 1fr}}
+.sub-card {border:1.5px solid #e8e5de;border-radius:12px;padding:18px;display:flex;flex-direction:column;justify-content:between;background:#fff;position:relative;transition:.2s}
+.sub-card:hover {border-color:#2d6a4f}
+.sub-card.premium {border:2.5px solid #2d6a4f;background:rgba(45,106,79,0.02)}
+.sub-tag {display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:6px;margin-bottom:8px}
+.sub-tag.pro {background:#e8f5e9;color:#2d6a4f}
+.sub-tag.premium {background:#2d6a4f;color:#fff}
+.sub-reco {position:absolute;-top:12px;right:16px;background:#d4a017;color:#000;font-size:9px;font-weight:800;padding:2px 8px;border-radius:10px;text-transform:uppercase}
+.sub-price {font-size:20px;font-weight:800;color:#1a1a1a;margin:8px 0 12px}
+.sub-price span {font-size:12px;font-weight:400;color:#7a7a6e}
+.sub-features {list-style:none;margin-top:8px;padding-top:10px;border-top:1px solid #e8e5de;font-size:12px;color:#4a4a4a}
+.sub-features li {margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.sub-pay-grid {display:grid;grid-template-columns:1fr;gap:10px;max-width:400px;margin:16px auto 0}
+.sub-pay-btn {border:1.5px solid #e8e5de;padding:14px;border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:.15s}
+.sub-pay-btn:hover {border-color:#2d6a4f;background:rgba(45,106,79,0.02);transform:scale(1.01)}
+.sub-pay-btn.momo .pay-title {font-weight:800;color:#ffb300}
+.sub-pay-btn.moov .pay-title {font-weight:800;color:#009688}
+.sub-pay-btn.celtis .pay-title {font-weight:800;color:#e91e63}
+.sub-pay-btn.card .pay-title {font-weight:800;color:#1565c0}
+.pay-subtitle {font-size:10px;color:#7a7a6e;margin-top:2px}
+
+/* --- STYLES AJOUTÉS : bannière bêta + badge cloud + verrous plan --- */
+.betaBanner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:13px}
+.betaBanner.active{background:#e8f5e9;border:1.5px solid #b7dfc4;color:#1e4d36}
+.betaBanner.warn{background:#fef9e7;border:1.5px solid #f5e4a1;color:#7a5c00}
+.betaBanner.over{background:#fce8e6;border:1.5px solid #f5c0bb;color:#8a1f13}
+.betaBanner b{font-weight:800}
+.cloudTag{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#2d6a4f;background:#e8f5e9;border:1px solid #b7dfc4;padding:4px 10px;border-radius:20px;font-weight:600}
+.lockNote{font-size:11px;color:#b7770d;background:#fef9e7;border:1px solid #f5e4a1;padding:6px 10px;border-radius:6px;margin-top:6px}
+
+/* --- BADGES DE FONCTIONNALITÉS VERROUILLÉES PAR PLAN --- */
+.featureLock{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7a5c00;background:#fef9e7;border:1px solid #f5e4a1;padding:4px 10px;border-radius:20px;cursor:pointer;white-space:nowrap}
+.featureLock:hover{background:#f5e4a1}
+.scanQuotaTag{font-size:10px;color:#7a7a6e;margin-left:6px}
+.scanQuotaTag.low{color:#c0392b;font-weight:700}
+
+/* --- SCANNER CODE-BARRES --- */
+.scanOvl{display:none;position:fixed;inset:0;background:#000;z-index:600;flex-direction:column}
+.scanOvl.op{display:flex}
+.scanTop{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#000;color:#fff}
+.scanTitle{font-size:15px;font-weight:700}
+.scanClose{background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer}
+#scanReaderBox{flex:1;position:relative;background:#000;overflow:hidden}
+#scanReader{width:100%;height:100%}
+#scanReader video{width:100%!important;height:100%!important;object-fit:cover}
+.scanTargetHint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;max-width:280px;aspect-ratio:1/1;border:3px solid #52b788;border-radius:16px;box-shadow:0 0 0 2000px rgba(0,0,0,.4);pointer-events:none;z-index:5}
+.scanBottom{padding:16px;background:#000;text-align:center}
+.scanStatus{color:#fff;font-size:13px;margin-bottom:10px;min-height:18px}
+.scanOfflineTag{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#fff;background:#b7770d;padding:4px 10px;border-radius:20px;margin-bottom:10px}
+.btnScan{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.3);color:#fff}
+.scanTriggerBtn{display:inline-flex;align-items:center;gap:6px}
+.scanBadgePending{background:#d4a017;color:#000;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px}
+</style>
+</head>
+<body>
+
+<div id="auth">
+<div class="abox">
+  <div class="alogo">Gesti<span>Stock</span> Pro</div>
+  <div class="asub">Gestion de stock multi-dépôts</div>
+  <div class="atabs" id="authTabs">
+    <button class="atab on" onclick="switchTab('login')">Connexion</button>
+    <button class="atab" onclick="switchTab('reg')">Créer compte</button>
+  </div>
+  <div id="loginForm">
+    <div class="fl"><label>Email</label><input class="fi" id="le" type="email" placeholder="vous@email.com"></div>
+    <div class="fl"><label>Mot de passe</label><input class="fi" id="lp" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="bauth" id="btnLogin" onclick="doLogin()">Se connecter</button>
+    <div id="lmsg" style="font-size:12px;margin-top:8px;text-align:center"></div>
+    <div style="text-align:center;margin-top:10px"><a href="#" onclick="doForgotPwd();return false" style="font-size:12px;color:#2d6a4f;text-decoration:underline">Mot de passe oublié ?</a></div>
+  </div>
+  <div id="regForm" style="display:none">
+    <div class="fl"><label>Nom de l'entreprise</label><input class="fi" id="rcompany" placeholder="Ex: Pharmacie Alpha"></div>
+    <div class="fl"><label>Votre nom</label><input class="fi" id="rn" placeholder="Prenom Nom"></div>
+    <div class="fl"><label>Email</label><input class="fi" id="re" type="email" placeholder="email@..."></div>
+    <div class="fl"><label>Mot de passe</label><input class="fi" id="rp" type="password" placeholder="Min. 6 caractères"></div>
+    <button class="bauth" id="btnReg" onclick="doRegister()">Créer mon compte</button>
+    <div id="rm" style="font-size:12px;margin-top:8px;text-align:center"></div>
+  </div>
+  <div id="inviteJoinForm" style="display:none">
+    <div class="hint" id="inviteJoinInfo" style="margin-top:0;margin-bottom:14px"></div>
+    <div class="fl"><label>Votre nom</label><input class="fi" id="jn" placeholder="Prenom Nom"></div>
+    <div class="fl"><label>Email</label><input class="fi" id="je" type="email" placeholder="email@..."></div>
+    <div class="fl"><label>Mot de passe</label><input class="fi" id="jp" type="password" placeholder="Min. 6 caractères"></div>
+    <button class="bauth" id="btnJoin" onclick="doJoinViaInvite()">Rejoindre l'entreprise</button>
+    <div id="jm" style="font-size:12px;margin-top:8px;text-align:center"></div>
+  </div>
+</div>
+</div>
+
+<div class="sbbg" id="sbbg" onclick="closeSB()"></div>
+<div id="app">
+<div class="sb" id="sb">
+  <div class="sbl"><div class="sbn">Gesti<span>Stock</span> Pro</div></div>
+  <div class="nav">
+    <div class="ns">Principal</div>
+    <div class="ni on" data-p="dashboard" onclick="showPage('dashboard',this)">📊 Tableau de bord</div>
+    <div class="ni" data-p="produits" onclick="showPage('produits',this)">📦 Produits</div>
+    <div class="ni" data-p="mouvements" onclick="showPage('mouvements',this)">🔄 Mouvements</div>
+    <div class="ns">Gestion</div>
+    <div class="ni" data-p="factures" onclick="showPage('factures',this)">🧾 Factures</div>
+    <div class="ni" data-p="credits" onclick="showPage('credits',this)">💳 Crédits clients <span class="nbadge" id="creditbadge">0</span></div>
+    <div class="ni" data-p="rapports" onclick="showPage('rapports',this)">📈 Rapports</div>
+    <div class="ni" data-p="alertes" onclick="showPage('alertes',this)">🔔 Alertes <span class="nbadge" id="abadge">0</span></div>
+    <div class="ns adm">Admin</div>
+    <div class="ni adm" data-p="depots" onclick="showPage('depots',this)">🏪 Dépôts</div>
+    <div class="ni adm" data-p="utilisateurs" onclick="showPage('utilisateurs',this)">👥 Équipe</div>
+    <div class="ns">Compte</div>
+    <div class="ni" data-p="profil" onclick="showPage('profil',this)">⚙️ Paramètres</div>
+  </div>
+  <div class="sbu">
+    <div class="sbun" id="uname">—</div>
+    <div class="sbur" id="urole">—</div>
+    <button class="blg" onclick="doLogout()">Déconnexion</button>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="mbtn" onclick="openSB()">☰</button>
+      <div class="ptit" id="ptitle">Tableau de bord</div>
+    </div>
+    <div class="tbr">
+      <span class="cloudTag">☁️ Sauvegarde automatique</span>
+      <button class="btn bp" id="btnAdd" onclick="openProdModal()">+ Produit</button>
+    </div>
+  </div>
+  <div class="cnt">
+
+    <div class="pg" id="pg-dashboard">
+      <div id="offlineBannerBox" style="display:none"></div>
+      <div id="betaBannerBox"></div>
+      <div class="sg">
+        <div class="sc g"><div class="sl">En stock</div><div class="sv g" id="d-ok">0</div><div class="ss" id="d-oks">—</div></div>
+        <div class="sc y"><div class="sl">Stock faible</div><div class="sv y" id="d-low">0</div><div class="ss">sous le seuil</div></div>
+        <div class="sc r"><div class="sl">Ruptures</div><div class="sv r" id="d-out">0</div><div class="ss">à commander</div></div>
+        <div class="sc b"><div class="sl">Valeur stock</div><div class="sv b" id="d-val">0</div><div class="ss">FCFA</div></div>
+      </div>
+      <div class="sg">
+        <div class="sc g"><div class="sl">Total produits</div><div class="sv g" id="d-totprod" style="font-size:20px">0</div><div class="ss">références au catalogue</div></div>
+        <div class="sc b"><div class="sl">Total mouvements</div><div class="sv b" id="d-totmvt" style="font-size:20px">0</div><div class="ss">entrées + sorties</div></div>
+        <div class="sc y"><div class="sl">Dernière connexion</div><div class="sv y" id="d-lastlogin" style="font-size:14px">—</div><div class="ss">votre précédente visite</div></div>
+        <div class="sc r"><div class="sl">En rupture</div><div class="sv r" id="d-ruptureN" style="font-size:20px">0</div><div class="ss">produits à 0</div></div>
+      </div>
+      <div class="panel">
+        <div class="ph">
+          <div class="pt">📈 Évolution des ventes</div>
+          <div class="pa">
+            <button class="btn bs bxs" id="salesRange7" onclick="setSalesRange(7)">7 jours</button>
+            <button class="btn bp bxs" id="salesRange30" onclick="setSalesRange(30)">30 jours</button>
+          </div>
+        </div>
+        <div style="padding:16px" id="salesChartBox"><div class="loading">Chargement...</div></div>
+      </div>
+      <div class="panel"><div class="ph"><div class="pt">Produits à surveiller</div><button class="btn bp bxs" id="btnShareStockAlert" onclick="shareStockAlertWhatsapp()">💬 Partager sur WhatsApp</button></div><div id="watchlist"><div class="loading">Chargement...</div></div></div>
+    </div>
+
+    <div class="pg" id="pg-produits">
+      <div class="panel">
+        <div class="ph"><div class="pt">Catalogue produits</div>
+          <div class="pa">
+            <input class="sr" placeholder="Rechercher..." oninput="renderProds(this.value)" style="width:150px">
+            <button class="btn bp bxs scanTriggerBtn" onclick="openScanner('produits')">📷 Scanner<span id="pendingBadgeProds" class="scanBadgePending" style="display:none">0</span></button><span id="scanQuotaTag" class="scanQuotaTag" style="display:none"></span>
+            <button class="btn bs bxs" onclick="exportProduits()">📊 Export Excel</button>
+            <button class="btn bs bxs" onclick="exportProduitsPDF()">📄 Export PDF</button>
+            <button class="btn bs bxs" id="btnShareCatalog" onclick="shareCatalogWhatsapp()">💬 Envoyer le rapport</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Produit</th><th>Cat.</th><th>Depot</th><th>Qte</th><th>Seuil</th><th>P.Vente</th><th>Statut</th><th>Prévision</th><th>Actions</th></tr></thead><tbody id="ptbody"><tr><td colspan="9"><div class="loading">Chargement...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-mouvements">
+      <div class="panel" id="mvtForm">
+        <div class="ph"><div class="pt">Enregistrer un mouvement</div></div>
+        <div style="padding:16px">
+          <div id="offlineMvtBadge" class="lockNote" style="display:none;margin-bottom:10px"></div>
+          <div id="mvtmsg" style="color:#c0392b;font-size:12px;margin-bottom:8px"></div>
+          <div class="mtb">
+            <button class="btn bp" id="mbin" onclick="setMvt('entree')">⬆ Entrée</button>
+            <button class="btn bs" id="mbout" onclick="setMvt('sortie')">⬇ Sortie</button>
+            <button class="btn bp bxs scanTriggerBtn" onclick="openScanner('mouvements')" style="margin-left:auto">📷 Scanner</button>
+          </div>
+          <div id="vendeurNote" style="display:none;font-size:11px;color:#7a7a6e;background:#f5f4f0;padding:8px 10px;border-radius:7px;margin-bottom:10px">ℹ️ En tant que vendeur, vous pouvez enregistrer uniquement des sorties (ventes). Les entrées de stock sont gérées par l'administrateur.</div>
+          <div class="fl3">
+            <div class="fg"><label class="flb">Produit</label><select class="fs" id="mvtprod" onchange="updMvtInfo()"><option value="">Choisir...</option></select></div>
+            <div class="fg"><label class="flb">Quantité</label><input type="number" class="fi" id="mvtqty" min="1" placeholder="0"><div style="font-size:11px;color:#7a7a6e;margin-top:2px" id="mvtinfo"></div></div>
+          </div>
+          <div class="fl2">
+            <div class="fg"><label class="flb">Motif</label><select class="fs" id="mvtmotif">
+              <option value="">— Choisir un motif —</option>
+              <option value="Achat fournisseur">Achat fournisseur</option>
+              <option value="Vente">Vente</option>
+              <option value="Casse">Casse</option>
+              <option value="Perte">Perte</option>
+              <option value="Retour client">Retour client</option>
+              <option value="Inventaire">Inventaire</option>
+              <option value="Transfert">Transfert</option>
+              <option value="Autre">Autre</option>
+            </select></div>
+            <div class="fg"><label class="flb">Référence (facultatif)</label><input class="fi" id="mvtref" placeholder="N° BL, nom client..."></div>
+          </div>
+          <div class="fg"><label class="flb">Date</label><input type="date" class="fi" id="mvtdate" style="max-width:200px"></div>
+          <button class="btn bp" onclick="saveMvt()">Enregistrer</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="pt">Historique</div><div class="pa"><input class="sr" id="mvtSearch" placeholder="Rechercher un produit, motif..." oninput="renderMvts(this.value)" style="width:180px"><button class="btn bs bxs" onclick="exportMouvements()">📊 Export Excel</button><button class="btn bs bxs" onclick="exportMouvementsPDF()">📄 Export PDF</button></div></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Produit</th><th>Qte</th><th>Motif</th><th>Réf.</th><th>Par</th></tr></thead><tbody id="mvtbody"><tr><td colspan="7"><div class="loading">Chargement...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-factures">
+      <div class="panel">
+        <div class="ph"><div class="pt">Factures & Bons</div><div class="pa"><button class="btn bs bxs" onclick="exportFactures()">📊 Export Excel</button><button class="btn bs bxs" onclick="exportFacturesPDF()">📄 Export PDF</button><button class="btn bp" onclick="openFactModal()">+ Nouvelle facture</button></div></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Total</th><th>Type</th><th>Actions</th></tr></thead><tbody id="factbody"><tr><td colspan="6"><div class="loading">Chargement...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-credits">
+      <div class="sg">
+        <div class="sc y"><div class="sl">Total dû (clients)</div><div class="sv y" id="cr-totaldue" style="font-size:22px">0</div><div class="ss">FCFA</div></div>
+        <div class="sc r"><div class="sl">Dettes ouvertes</div><div class="sv r" id="cr-nbouvertes" style="font-size:22px">0</div><div class="ss">à recouvrer</div></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><div class="pt">Crédits clients</div><div class="pa"><input class="sr" id="creditSearch" placeholder="Rechercher un client..." oninput="renderCredits(this.value)" style="width:160px"><button class="btn bs bxs" onclick="exportCreditsPDF()">📄 Export PDF</button><button class="btn bp" onclick="openDebtModal()">+ Nouvelle vente à crédit</button></div></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Client</th><th>Description</th><th>Dû</th><th>Payé</th><th>Solde</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="creditbody"><tr><td colspan="7"><div class="loading">Chargement...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-rapports">
+      <div class="panel">
+        <div class="ph">
+          <div class="pt">📈 Rapport de période</div>
+          <div class="pa">
+            <select class="fs" id="rapportPeriode" onchange="renderRapport()" style="width:auto">
+              <option value="7">7 derniers jours</option>
+              <option value="30" selected>30 derniers jours</option>
+              <option value="90">3 derniers mois</option>
+              <option value="all">Depuis le début</option>
+            </select>
+            <button class="btn bs bxs" onclick="exportRapportPDF()">📄 Export PDF</button>
+          </div>
+        </div>
+        <div style="padding:16px" id="rapportContent"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-alertes">
+      <div class="panel"><div class="ph"><div class="pt">Produits a surveiller</div></div><div id="alertlist"><div class="loading">Chargement...</div></div></div>
+    </div>
+
+    <div class="pg" id="pg-depots">
+      <div class="panel">
+        <div class="ph"><div class="pt">Gestion des dépôts</div><div class="pa"><button class="btn bs bxs" onclick="exportDepots()">📊 Export Excel</button><button class="btn bp" onclick="openDepotModal()">+ Nouveau dépôt</button></div></div>
+        <table><thead><tr><th>Nom</th><th>Adresse</th><th>Responsable</th><th>Produits</th><th>Actions</th></tr></thead><tbody id="dbody"><tr><td colspan="5"><div class="loading">Chargement...</div></td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-utilisateurs">
+      <div class="panel">
+        <div class="ph"><div class="pt">Équipe</div><button class="btn bp adm" onclick="openInviteModal()">+ Inviter un membre</button></div>
+        <div style="padding:16px">
+          <div class="hint">Cliquez sur « + Inviter un membre » pour générer un lien à envoyer par WhatsApp. La personne qui l'ouvre rejoint directement votre entreprise avec le rôle que vous avez choisi.</div>
+        </div>
+        <table><thead><tr><th>Nom</th><th>Role</th><th>Membre depuis</th><th>Actions</th></tr></thead><tbody id="ubody"><tr><td colspan="4"><div class="loading">Chargement...</div></td></tr></tbody></table>
+      </div>
+      <div class="panel adm" id="connexionsPanel">
+        <div class="ph"><div class="pt">🔐 Historique des connexions</div></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Membre</th><th>Date</th><th>Heure</th></tr></thead><tbody id="cxbody"><tr><td colspan="3"><div class="loading">Chargement...</div></td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="pg" id="pg-profil">
+      <div class="panel">
+        <div class="ph"><div class="pt">⚙️ Paramètres <span class="betaTag" id="planTag">Bêta 1.0</span></div></div>
+        <div style="padding:16px 16px 0">
+          <div class="ptabs">
+            <button class="ptab on" data-pt="mon-profil" onclick="switchPtab('mon-profil')">👤 Mon profil</button>
+            <button class="ptab adm" data-pt="entreprise" onclick="switchPtab('entreprise')" style="display:none">🏢 Mon entreprise</button>
+            <button class="ptab" data-pt="securite" onclick="switchPtab('securite')">🔐 Sécurité</button>
+            <button class="ptab adm" data-pt="abonnement" onclick="switchPtab('abonnement')" style="display:none">💳 Abonnement</button>
+            <button class="ptab" data-pt="conditions" onclick="switchPtab('conditions')">📄 Conditions</button>
+            <button class="ptab" data-pt="confidentialite" onclick="switchPtab('confidentialite')">🔒 Confidentialité</button>
+            <button class="ptab" data-pt="support" onclick="switchPtab('support')">📞 Support</button>
+          </div>
+        </div>
+
+        <div class="psec on" id="psec-mon-profil">
+          <div style="padding:4px 20px 24px;max-width:480px">
+            <div id="profilMsg" style="font-size:12px;margin-bottom:12px"></div>
+            <div class="fg"><label class="flb">Nom complet</label><input class="fi" id="profNom" placeholder="Votre nom"></div>
+            <div class="fg"><label class="flb">Email</label><input class="fi" id="profEmail" disabled style="background:#f5f4f0;color:#7a7a6e"></div>
+            <div class="fg"><label class="flb">Role</label><input class="fi" id="profRole" disabled style="background:#f5f4f0;color:#7a7a6e"></div>
+            <button class="btn bp" onclick="saveProfil()">Enregistrer les modifications</button>
+          </div>
+        </div>
+
+        <div class="psec" id="psec-entreprise">
+          <div style="padding:4px 20px 24px;max-width:560px">
+            <div id="entMsg" style="font-size:12px;margin-bottom:12px"></div>
+            <div class="fg"><label class="flb">Nom de l'entreprise</label><input class="fi" id="entNom" placeholder="Nom de votre entreprise"></div>
+            <div class="fl2">
+              <div class="fg"><label class="flb">Téléphone</label><input class="fi" id="entTel" placeholder="+229..."></div>
+              <div class="fg"><label class="flb">Email entreprise</label><input class="fi" id="entEmail" placeholder="contact@entreprise.com"></div>
+            </div>
+            <div class="fg"><label class="flb">Adresse</label><input class="fi" id="entAdresse" placeholder="Adresse complète"></div>
+            <div class="fl2">
+              <div class="fg"><label class="flb">Devise</label><select class="fs" id="entDevise"><option value="FCFA">FCFA</option><option value="EUR">EUR</option><option value="USD">USD</option></select></div>
+              <div class="fg"><label class="flb">Fuseau horaire</label><select class="fs" id="entFuseau"><option value="Africa/Porto-Novo">Afrique de l'Ouest (GMT+1)</option><option value="UTC">UTC</option></select></div>
+            </div>
+            <div class="fg">
+              <label class="flb">Logo (URL image, facultatif)</label>
+              <input class="fi" id="entLogo" placeholder="https://...">
+              <div class="lockNote" id="logoLockNote" style="display:none">🔒 Le logo sur vos factures est réservé aux plans Pro et Premium.</div>
+            </div>
+            <button class="btn bp" onclick="saveEntreprise()">Enregistrer les modifications</button>
+          </div>
+        </div>
+
+        <div class="psec" id="psec-securite">
+          <div style="padding:4px 20px 24px;max-width:480px">
+            <div id="pwdMsg" style="font-size:12px;margin-bottom:12px"></div>
+            <div class="fg"><label class="flb">Nouveau mot de passe</label><input type="password" class="fi" id="newPwd" placeholder="Min. 6 caractères"></div>
+            <div class="fg"><label class="flb">Confirmer le nouveau mot de passe</label><input type="password" class="fi" id="newPwd2" placeholder="Retapez le mot de passe"></div>
+            <button class="btn bp" onclick="changePwd()">Changer le mot de passe</button>
+          </div>
+        </div>
+
+        <div class="psec" id="psec-abonnement">
+          <div style="padding:4px 20px 24px;max-width:560px" id="abonnementContent">
+            <div class="loading">Chargement...</div>
+          </div>
+        </div>
+
+        <div class="psec" id="psec-conditions">
+          <div class="staticPage">
+            <h4>Conditions d'utilisation</h4>
+            <p>GestiStock Pro est actuellement en <b>version Bêta 1.0</b>. En utilisant cette application, vous acceptez qu'il s'agit d'une version en cours de développement et de test.</p>
+            <h4>Utilisation du service</h4>
+            <p>Vous êtes responsable de l'exactitude des données que vous saisissez (produits, stocks, factures). L'application est fournie "en l'état" pendant la phase bêta, sans garantie de disponibilité continue.</p>
+            <h4>Compte et sécurité</h4>
+            <p>Vous êtes responsable de la confidentialité de votre mot de passe. Toute action effectuée depuis votre compte est considérée comme effectuée par vous.</p>
+            <h4>Contact</h4>
+            <p>Pour toute question sur ces conditions, contactez Irex Digital.</p>
+          </div>
+        </div>
+
+        <div class="psec" id="psec-confidentialite">
+          <div class="staticPage">
+            <h4>Politique de confidentialité</h4>
+            <p>Vos données (produits, mouvements, factures, informations d'entreprise) sont stockées de façon sécurisée et ne sont jamais partagées avec d'autres entreprises utilisant l'application.</p>
+            <h4>Données collectées</h4>
+            <p>Nous collectons uniquement les informations nécessaires au fonctionnement du service : votre nom, email, et les données de gestion de stock que vous saisissez.</p>
+            <h4>Sécurité</h4>
+            <p>L'accès aux données est protégé par un système d'authentification et des règles de sécurité empêchant qu'une entreprise accède aux données d'une autre.</p>
+            <h4>Vos droits</h4>
+            <p>Vous pouvez demander la suppression de vos données à tout moment en contactant le support.</p>
+          </div>
+        </div>
+
+        <div class="psec" id="psec-support">
+          <div class="staticPage">
+            <h4>Besoin d'aide ?</h4>
+            <p>GestiStock Pro est actuellement en version bêta. Si vous rencontrez un bug, une erreur, ou si vous avez une question, n'hésitez pas à nous contacter.</p>
+            <h4>Contact</h4>
+            <p><b>Irex Digital</b><br>WhatsApp : disponible sur demande<br>Email : contact disponible sur demande</p>
+            <h4>Signaler un bug</h4>
+            <p>Merci de joindre une capture d'écran et une description de ce qui s'est passé pour nous aider à corriger rapidement.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="ovl" id="prodOvl">
+<div class="modal">
+  <div class="mt" id="prodMT">Ajouter un produit</div>
+  <div class="fg"><label class="flb">Nom *</label><input class="fi" id="pnom" placeholder="Ex: Yaourt nature"></div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Catégorie</label><select class="fs" id="pcat"><option>Alimentation</option><option>Boisson</option><option>Cosmétique</option><option>Hygiène</option><option>Textile</option><option>Matériel</option><option>Pharmacie</option><option>Agriculture</option><option>Autre</option></select></div>
+    <div class="fg">
+      <label class="flb">Unité de mesure</label>
+      <select class="fs" id="punite" onchange="toggleCustomUnite()">
+        <option value="pièce">Pièce</option>
+        <option value="kg">Kg</option>
+        <option value="litre">Litre</option>
+        <option value="sac">Sac</option>
+        <option value="carton">Carton</option>
+        <option value="boule">Boule</option>
+        <option value="bouteille">Bouteille</option>
+        <option value="paquet">Paquet</option>
+        <option value="sachet">Sachet</option>
+        <option value="bidon">Bidon</option>
+        <option value="__custom__">Autre (précisez)...</option>
+      </select>
+      <input class="fi" id="puniteCustom" placeholder="Ex: Bassine, Botte..." style="display:none;margin-top:6px">
+    </div>
+  </div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Quantité</label><input type="number" class="fi" id="pqty" placeholder="0" min="0"></div>
+    <div class="fg"><label class="flb">Seuil alerte</label><input type="number" class="fi" id="pseuil" placeholder="5" min="0"></div>
+  </div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Prix achat (FCFA)</label><input type="number" class="fi" id="ppa" placeholder="0"></div>
+    <div class="fg"><label class="flb">Prix vente (FCFA)</label><input type="number" class="fi" id="ppv" placeholder="0"></div>
+  </div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Fournisseur</label><input class="fi" id="pfourn" placeholder="Nom fournisseur"></div>
+    <div class="fg"><label class="flb">Dépôt</label><select class="fs" id="pdepot"></select></div>
+  </div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Code SKU / Référence (facultatif)</label><input class="fi" id="psku" placeholder="Ex: YAO-NAT-500"></div>
+    <div class="fg"><label class="flb">Image (URL, facultatif)</label><input class="fi" id="pimage" placeholder="https://..."></div>
+  </div>
+  <div class="fg">
+    <label class="flb">Code-barres (facultatif)</label>
+    <div style="display:flex;gap:6px">
+      <input class="fi" id="pbarcode" placeholder="Scanné ou saisi manuellement" style="flex:1">
+      <button type="button" class="btn bs" onclick="openScanner('prodModal')">📷</button>
+    </div>
+  </div>
+  <div class="mf">
+    <button class="btn bs" onclick="closeOvl('prodOvl')">Annuler</button>
+    <button class="btn bp" onclick="saveProd()">Enregistrer</button>
+  </div>
+</div>
+</div>
+
+<div class="ovl" id="depotOvl">
+<div class="modal">
+  <div class="mt" id="depotMT">Nouveau dépôt</div>
+  <div class="fg"><label class="flb">Nom *</label><input class="fi" id="dnom" placeholder="Ex: Boutique Centrale"></div>
+  <div class="fg"><label class="flb">Adresse</label><input class="fi" id="daddr" placeholder="Quartier, ville..."></div>
+  <div class="fg"><label class="flb">Responsable</label><input class="fi" id="dresp" placeholder="Prenom Nom"></div>
+  <div class="mf">
+    <button class="btn bs" onclick="closeOvl('depotOvl')">Annuler</button>
+    <button class="btn bp" onclick="saveDepot()">Enregistrer</button>
+  </div>
+</div>
+</div>
+
+<div class="ovl" id="factOvl">
+<div class="modal" style="width:580px">
+  <div class="mt" id="factMT">Nouvelle facture</div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Client *</label><input class="fi" id="fclient" placeholder="Nom client"></div>
+    <div class="fg"><label class="flb">Date</label><input type="date" class="fi" id="fdate"></div>
+  </div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Téléphone</label><input class="fi" id="ftel" placeholder="+229..."></div>
+    <div class="fg"><label class="flb">Type</label><select class="fs" id="ftype"><option value="facture">Facture</option><option value="bon">Bon de commande</option><option value="devis">Devis</option></select></div>
+  </div>
+  <div style="font-size:11px;font-weight:700;color:#7a7a6e;text-transform:uppercase;margin:12px 0 8px">Lignes produits</div>
+  <div id="flines"></div>
+  <button class="btn bs" style="margin-top:8px;font-size:12px" onclick="addFL()">+ Ajouter ligne</button>
+  <div style="text-align:right;margin-top:12px;font-size:15px;font-weight:700">Total : <span id="ftotal" style="color:#2d6a4f">0 FCFA</span></div>
+
+  <div style="font-size:11px;font-weight:700;color:#7a7a6e;text-transform:uppercase;margin:16px 0 8px">Paiement</div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Moyen de paiement</label>
+      <select class="fs" id="fpaymode" onchange="updFT()">
+        <option value="Espèces">💵 Espèces</option>
+        <option value="MTN MoMo">📱 MTN MoMo</option>
+        <option value="Moov Money">📱 Moov Money</option>
+        <option value="Carte bancaire">💳 Carte bancaire</option>
+        <option value="Virement">🏦 Virement</option>
+        <option value="Autre">Autre</option>
+      </select>
+    </div>
+    <div class="fg"><label class="flb">Montant reçu (FCFA)</label><input type="number" class="fi" id="fmontantrecu" placeholder="0" min="0" oninput="updFT()"></div>
+  </div>
+  <div style="text-align:right;font-size:13px;color:#7a7a6e;margin-bottom:4px">Monnaie à rendre : <b id="fmonnaie" style="color:#1a1a1a">0 FCFA</b></div>
+
+  <div class="fg" style="margin-top:10px"><label class="flb">Notes</label><textarea class="fta" id="fnotes"></textarea></div>
+  <div class="mf">
+    <button class="btn bs" onclick="closeOvl('factOvl')">Annuler</button>
+    <button class="btn bp" onclick="saveFactBtn()">Enregistrer</button>
+  </div>
+</div>
+</div>
+
+<div class="ovl" id="previewOvl">
+<div class="modal" style="width:620px">
+  <div class="mt">Aperçu de la facture</div>
+  <div id="previewContent" style="background:#fff;border:1px solid #e8e5de;border-radius:8px;padding:24px"></div>
+  <div class="mf">
+    <button class="btn bs" onclick="closeOvl('previewOvl')">Fermer</button>
+    <button class="btn bp" id="btnPrintPdf" onclick="handlePrintClick()">🖨️ Imprimer / Enregistrer en PDF</button>
+  </div>
+</div>
+</div>
+
+<div class="ovl" id="subOvl">
+<div class="modal" style="width:580px; max-width:92vw">
+  
+  <div id="subStep1">
+    <div class="mt" style="text-align:center;margin-bottom:4px">Propulsez votre gestion au niveau supérieur</div>
+    <div style="font-size:12px;color:#7a7a6e;text-align:center;margin-bottom:20px">Débloquez des fonctionnalités avancées indispensables pour votre activité.</div>
+    
+    <div class="sub-modal-grid">
+      <div class="sub-card">
+        <div>
+          <span class="sub-tag pro">Plan Pro</span>
+          <div class="sub-price">10 000 FCFA <span>/ mois</span></div>
+          <ul class="sub-features">
+            <li>✓ <span>Jusqu'à 3 dépôts différents</span></li>
+            <li>✓ <span>3 Utilisateurs avec rôles</span></li>
+            <li>✓ <span><b>Scanner code-barres illimité</b></span></li>
+            <li>✓ <span>Alertes auto de stock faible</span></li>
+            <li style="color:#b7770d">🔒 <span>Prévisions IA & Partage WhatsApp</span></li>
+          </ul>
+        </div>
+        <button class="btn bp" style="width:100%;margin-top:16px;justify-content:center" onclick="goToSubStep2('Pro')">Payer votre abonnement</button>
+      </div>
+
+      <div class="sub-card premium">
+        <span class="sub-reco">Recommandé</span>
+        <div>
+          <span class="sub-tag premium">Plan Premium</span>
+          <div class="sub-price">25 000 FCFA <span>/ mois</span></div>
+          <ul class="sub-features">
+            <li>✓ <span><b>Dépôts & Membres ILLIMITÉS</b></span></li>
+            <li>✓ <span>Scanner code-barres illimité</span></li>
+            <li>✓ <span><b>Prévisions IA de rupture de stock</b></span></li>
+            <li>✓ <span><b>Partage WhatsApp automatique</b></span></li>
+            <li>✓ <span>Exports Excel / CSV</span></li>
+          </ul>
+        </div>
+        <button class="btn bp" style="width:100%;margin-top:16px;justify-content:center" onclick="goToSubStep2('Premium')">Payer votre abonnement</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="subStep2" style="display:none; text-align:center">
+    <button class="btn bs bxs" style="margin-bottom:12px" onclick="goToSubStep1()">← Retour aux offres</button>
+    <div class="mt" style="margin-bottom:4px">Finalisez votre abonnement <span id="selectedPlanLabel" style="color:#2d6a4f"></span></div>
+    <div style="font-size:12px;color:#7a7a6e;margin-bottom:20px">Payez en ligne par Mobile Money ou carte. L'abonnement s'active automatiquement après confirmation.</div>
+
+    <button class="btn bp" id="btnPayFedapay" style="width:100%;justify-content:center;padding:14px;font-size:14px" onclick="startFedapayCheckout()">💳 Payer maintenant (<span id="selectedPlanPrice"></span> FCFA)</button>
+
+    <div id="paymentStatusBox" style="margin-top:14px;font-size:13px"></div>
+
+    <div style="font-size:10px;color:#7a7a6e;margin-top:16px;background:#f5f4f0;padding:8px;border-radius:6px;display:inline-block">
+      🔒 Paiement sécurisé via FedaPay — MTN MoMo, Moov Money, Celtis Money, Carte bancaire.
+    </div>
+
+    <div style="margin-top:18px;border-top:1px solid #e8e5de;padding-top:14px">
+      <div style="font-size:11px;color:#7a7a6e;margin-bottom:8px">Le paiement en ligne ne fonctionne pas ? Contactez-nous directement :</div>
+      <button class="btn bs bxs" onclick="triggerPayment('Support manuel')">💬 Contacter le support WhatsApp</button>
+    </div>
+  </div>
+
+  <div class="mf" style="margin-top:16px">
+    <button class="btn bs" onclick="closeOvl('subOvl')">Fermer</button>
+  </div>
+</div>
+</div>
+
+<div id="stockAlertPopup" style="display:none;position:fixed;top:70px;right:16px;left:16px;max-width:340px;margin-left:auto;background:#fff;border:1.5px solid #f5c0bb;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:500;overflow:hidden">
+  <div style="background:#fce8e6;padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
+    <div style="font-weight:700;font-size:13px;color:#8a1f13">🔔 Alerte stock</div>
+    <button onclick="closeStockAlertPopup()" style="background:none;border:none;font-size:16px;cursor:pointer;color:#8a1f13">✕</button>
+  </div>
+  <div id="stockAlertPopupBody" style="padding:10px 14px;max-height:220px;overflow-y:auto;font-size:12px"></div>
+  <div style="padding:10px 14px;border-top:1px solid #f5e4a1">
+    <button class="btn bs" style="width:100%;justify-content:center" onclick="closeStockAlertPopup();showPage('alertes',document.querySelector('[data-p=alertes]'))">Voir toutes les alertes</button>
+  </div>
+</div>
+
+<div class="ovl" id="inviteOvl">
+<div class="modal">
+  <div class="mt">Inviter un membre</div>
+  <div id="inviteStepForm">
+    <div class="fg"><label class="flb">Rôle attribué</label>
+      <select class="fs" id="inviteRole">
+        <option value="gerant">Gérant — produits et mouvements complets</option>
+        <option value="vendeur" selected>Vendeur — sorties de stock et factures uniquement</option>
+        <option value="viewer">Lecteur — consultation seule</option>
+      </select>
+    </div>
+    <div class="hint">Le lien généré sera valable une seule fois. La personne qui l'ouvre créera son mot de passe et rejoindra automatiquement votre entreprise avec ce rôle.</div>
+    <div class="mf">
+      <button class="btn bs" onclick="closeOvl('inviteOvl')">Annuler</button>
+      <button class="btn bp" onclick="generateInvite()">Générer le lien</button>
+    </div>
+  </div>
+  <div id="inviteStepResult" style="display:none">
+    <div class="fg"><label class="flb">Lien d'invitation</label>
+      <input class="fi" id="inviteLinkOutput" readonly style="font-size:12px">
+    </div>
+    <div class="hint" id="inviteResultMsg"></div>
+    <div class="mf">
+      <button class="btn bs" onclick="closeOvl('inviteOvl')">Fermer</button>
+      <button class="btn bp" onclick="copyInviteLink()">📋 Copier le lien</button>
+      <button class="btn bp" onclick="shareInviteWhatsapp()">💬 Envoyer sur WhatsApp</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="scanOvl" id="scanOvl">
+  <div class="scanTop">
+    <div class="scanTitle">📷 Scanner un code-barres</div>
+    <button class="scanClose" onclick="closeScanner()">✕</button>
+  </div>
+  <div id="scanReaderBox">
+    <div id="scanReader"></div>
+    <div class="scanTargetHint"></div>
+  </div>
+  <div class="scanBottom">
+    <div id="scanOfflineTag" class="scanOfflineTag" style="display:none">📡 Hors ligne — les scans seront synchronisés au retour du réseau</div>
+    <div class="scanStatus" id="scanStatus">Visez le code-barres dans le cadre</div>
+  </div>
+</div>
+
+<div class="ovl" id="debtOvl">
+<div class="modal">
+  <div class="mt">Nouvelle vente à crédit</div>
+  <div class="fg">
+    <label class="flb">Client *</label>
+    <select class="fs" id="debtClientSelect" onchange="toggleNewClientFields()">
+      <option value="">Choisir un client existant...</option>
+      <option value="__new__">+ Créer un nouveau client</option>
+    </select>
+  </div>
+  <div id="newClientFields" style="display:none">
+    <div class="fg"><label class="flb">Nom du client *</label><input class="fi" id="newClientNom" placeholder="Nom complet"></div>
+    <div class="fl2">
+      <div class="fg"><label class="flb">Téléphone</label><input class="fi" id="newClientTel" placeholder="+229..."></div>
+      <div class="fg"><label class="flb">Adresse</label><input class="fi" id="newClientAdresse" placeholder="Quartier, ville..."></div>
+    </div>
+  </div>
+  <div class="fg"><label class="flb">Description</label><input class="fi" id="debtDesc" placeholder="Ex: 2 sacs de riz, 1 bidon d'huile..."></div>
+  <div class="fl2">
+    <div class="fg"><label class="flb">Montant total dû (FCFA) *</label><input type="number" class="fi" id="debtAmount" min="0" placeholder="0"></div>
+    <div class="fg"><label class="flb">Acompte versé (facultatif)</label><input type="number" class="fi" id="debtDeposit" min="0" placeholder="0"></div>
+  </div>
+  <div class="mf">
+    <button class="btn bs" onclick="closeOvl('debtOvl')">Annuler</button>
+    <button class="btn bp" onclick="saveDebt()">Enregistrer</button>
+  </div>
+</div>
+</div>
+
+<div class="ovl" id="paymentOvl">
+<div class="modal">
+  <div class="mt">Enregistrer un remboursement</div>
+  <div class="hint" id="paymentDebtInfo" style="margin-top:0"></div>
+  <div class="fg"><label class="flb">Montant reçu (FCFA) *</label><input type="number" class="fi" id="paymentAmount" min="0" placeholder="0"></div>
+  <div class="mf">
+    <button class="btn bs" onclick="closeOvl('paymentOvl')">Annuler</button>
+    <button class="btn bp" onclick="saveDebtPayment()">Enregistrer le remboursement</button>
+  </div>
+</div>
+</div>
+
+<div class="confirmOvl" id="confirmOvl">
+<div class="confirmBox">
+  <div class="confirmIcon">⚠️</div>
+  <div class="confirmTitle" id="confirmTitle">Confirmer la suppression</div>
+  <div class="confirmText" id="confirmText">Cette action est irréversible.</div>
+  <div class="confirmBtns">
+    <button class="btn bs" onclick="closeConfirm()">Annuler</button>
+    <button class="btn bd" id="confirmBtnYes" onclick="confirmYes()">Supprimer</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ===== CONFIGURATION SUPABASE =====
+const SUPABASE_URL = 'https://mloxyrmsbadmnaesrggu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_OuC9ReKJLp3V6FAc7iOUmw_BN6J-NeS';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let CU=null, PROFILE=null, COMPANY_ID=null, EPId=null, EDId=null, EFId=null, MT='entree', FL=[];
+const ROLE_OPTIONS={admin:'Administrateur',gerant:'Gérant',vendeur:'Vendeur',viewer:'Lecteur'};
+
+// ============================================================
+// RESTRICTIONS PAR PLAN — Scanner (quota), Prévisions IA, Partage WhatsApp
+// ============================================================
+const SCAN_DAILY_LIMIT_FREE=5; // scans/jour autorisés en plan Gratuit (teaser)
+let SCAN_USAGE_TODAY=0;        // nombre de scans déjà effectués aujourd'hui (mis à jour depuis Supabase)
+
+// Vrai si le plan actuel donne un accès illimité au scanner (Pro et Premium)
+function scannerIsUnlimited(){
+  return SUB && (SUB.plan==='pro' || SUB.plan==='premium');
+}
+// Vrai si le plan actuel débloque les prévisions IA et le partage WhatsApp (Premium uniquement)
+function aiFeaturesUnlocked(){
+  return SUB && SUB.plan==='premium';
+}
+
+// Charge (ou crée) la ligne d'usage du jour pour l'entreprise, et met à jour SCAN_USAGE_TODAY
+async function loadScanUsageToday(){
+  if(scannerIsUnlimited()) return; // pas besoin de compter si illimité
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    const{data,error}=await sb.from('scan_usage').select('*').eq('company_id',COMPANY_ID).eq('scan_date',today).maybeSingle();
+    if(error){ console.error('loadScanUsageToday error',error); return; }
+    SCAN_USAGE_TODAY = data ? data.scan_count : 0;
+  }catch(e){
+    console.error('loadScanUsageToday network error',e);
+  }
+}
+
+// Vérifie si un nouveau scan est autorisé aujourd'hui ; si oui, incrémente le compteur côté Supabase.
+// Retourne true si le scan peut se poursuivre, false s'il faut bloquer et afficher l'upsell.
+async function tryConsumeScanQuota(){
+  if(scannerIsUnlimited()) return true;
+
+  if(SCAN_USAGE_TODAY>=SCAN_DAILY_LIMIT_FREE){
+    showUpsellModal('scanner');
+    return false;
+  }
+
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    const newCount=SCAN_USAGE_TODAY+1;
+    const{error}=await sb.from('scan_usage').upsert(
+      {company_id:COMPANY_ID,scan_date:today,scan_count:newCount},
+      {onConflict:'company_id,scan_date'}
+    );
+    if(error){ console.error('tryConsumeScanQuota upsert error',error); return true; } // on ne bloque pas l'utilisateur si Supabase a un souci ponctuel
+    SCAN_USAGE_TODAY=newCount;
+    updateScanQuotaDisplay();
+    return true;
+  }catch(e){
+    console.error('tryConsumeScanQuota network error',e);
+    return true;
+  }
+}
+
+// Met à jour le petit indicateur "X/5 scans aujourd'hui" à côté du bouton Scanner
+function updateScanQuotaDisplay(){
+  const tag=document.getElementById('scanQuotaTag');
+  if(!tag) return;
+  if(scannerIsUnlimited()){
+    tag.style.display='none';
+    return;
+  }
+  const remaining=Math.max(SCAN_DAILY_LIMIT_FREE-SCAN_USAGE_TODAY,0);
+  tag.textContent='('+remaining+'/'+SCAN_DAILY_LIMIT_FREE+' aujourd\'hui)';
+  tag.className='scanQuotaTag'+(remaining<=1?' low':'');
+  tag.style.display='inline';
+}
+
+// Affiche la modale d'incitation à l'upgrade, avec un message adapté à la fonctionnalité bloquée
+function showUpsellModal(feature){
+  const messages={
+    scanner:{title:'Scanner illimité',body:'Vous avez atteint votre limite de '+SCAN_DAILY_LIMIT_FREE+' scans gratuits aujourd\'hui. Débloquez le scanner illimité avec le Plan Pro.'},
+    ai:{title:'Prévisions IA & Partage WhatsApp',body:'Les prévisions de rupture de stock et le partage WhatsApp automatique sont réservés au Plan Premium.'}
+  };
+  const m=messages[feature]||messages.scanner;
+  toast('🔒 '+m.title+' — '+m.body,'warn');
+  openSubModal();
+}
+
+// Génère le badge HTML à afficher à la place d'une fonctionnalité verrouillée (IA/WhatsApp)
+function lockedFeatureBadge(label){
+  return '<span class="featureLock" onclick="showUpsellModal(\'ai\')">🔒 '+label+'</span>';
+}
+
+// Met à jour l'apparence des boutons de partage WhatsApp selon le plan actuel
+function updateWhatsappButtonsLockState(){
+  const unlocked=aiFeaturesUnlocked();
+  const btn1=document.getElementById('btnShareStockAlert');
+  const btn2=document.getElementById('btnShareCatalog');
+  if(btn1) btn1.innerHTML = unlocked ? '💬 Partager sur WhatsApp' : '🔒 Activer l\'IA (Premium)';
+  if(btn2) btn2.innerHTML = unlocked ? '💬 Envoyer le rapport' : '🔒 Activer l\'IA (Premium)';
+}
+
+// ============================================================
+// SCANNER DE CODE-BARRES (html5-qrcode) + FILE D'ATTENTE OFFLINE
+// ============================================================
+let SCAN_INSTANCE=null;      // instance active de Html5Qrcode
+let SCAN_CONTEXT=null;       // d'où le scanner a été ouvert : 'produits' | 'mouvements' | 'prodModal'
+let SCAN_CAMERA_ID=null;     // id de la caméra arrière détectée
+
+const DB_NAME='gestistock_offline';
+const DB_STORE='pending_scans';
+const DB_STORE_CACHE='offline_cache';       // copie locale des données (produits, dépôts...) pour consultation hors ligne
+const DB_STORE_PENDING_MVT='pending_mouvements'; // mouvements créés hors ligne, en attente de synchronisation
+const DB_VERSION=2; // incrémenté pour ajouter les nouveaux stores sans casser les scans déjà en file
+
+// ---- IndexedDB : file d'attente des scans hors-ligne + cache offline + mouvements en attente ----
+function openScanDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(DB_STORE)){
+        db.createObjectStore(DB_STORE,{keyPath:'id',autoIncrement:true});
+      }
+      if(!db.objectStoreNames.contains(DB_STORE_CACHE)){
+        db.createObjectStore(DB_STORE_CACHE,{keyPath:'key'});
+      }
+      if(!db.objectStoreNames.contains(DB_STORE_PENDING_MVT)){
+        db.createObjectStore(DB_STORE_PENDING_MVT,{keyPath:'id',autoIncrement:true});
+      }
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function queueOfflineScan(payload){
+  try{
+    const db=await openScanDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(DB_STORE,'readwrite');
+      tx.objectStore(DB_STORE).add({...payload,queued_at:new Date().toISOString()});
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){
+    console.error('queueOfflineScan error',e);
+    return false;
+  }
+}
+async function getPendingScans(){
+  try{
+    const db=await openScanDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(DB_STORE,'readonly');
+      const req=tx.objectStore(DB_STORE).getAll();
+      req.onsuccess=()=>resolve(req.result||[]);
+      req.onerror=()=>reject(req.error);
+    });
+  }catch(e){ return []; }
+}
+async function clearPendingScan(id){
+  try{
+    const db=await openScanDB();
+    const tx=db.transaction(DB_STORE,'readwrite');
+    tx.objectStore(DB_STORE).delete(id);
+  }catch(e){console.error('clearPendingScan error',e);}
+}
+async function updatePendingBadges(){
+  try{
+    const pending=await getPendingScans();
+    const n=pending.length;
+    ['pendingBadgeProds'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.textContent=n;
+      el.style.display=n>0?'inline-block':'none';
+    });
+    const pendingMvt=await getPendingMouvements();
+    updateOfflineMvtBadge(pendingMvt.length);
+  }catch(e){}
+}
+
+// ============================================================
+// MODE HORS LIGNE — cache local des données + file d'attente des mouvements
+// ============================================================
+
+// Sauvegarde une copie locale de CACHE (produits, dépôts, factures, etc.) pour
+// permettre la consultation même sans connexion. Appelée après chaque loadAllData() réussi.
+async function saveOfflineCache(){
+  try{
+    const db=await openScanDB();
+    const tx=db.transaction(DB_STORE_CACHE,'readwrite');
+    tx.objectStore(DB_STORE_CACHE).put({
+      key:'main_cache',
+      data:CACHE,
+      company_id:COMPANY_ID,
+      saved_at:new Date().toISOString()
+    });
+  }catch(e){
+    console.error('saveOfflineCache error',e);
+  }
+}
+
+// Charge la dernière copie locale connue de CACHE (utilisé quand loadAllData() échoue, hors ligne)
+async function loadOfflineCache(){
+  try{
+    const db=await openScanDB();
+    return new Promise((resolve)=>{
+      const tx=db.transaction(DB_STORE_CACHE,'readonly');
+      const req=tx.objectStore(DB_STORE_CACHE).get('main_cache');
+      req.onsuccess=()=>resolve(req.result||null);
+      req.onerror=()=>resolve(null);
+    });
+  }catch(e){
+    console.error('loadOfflineCache error',e);
+    return null;
+  }
+}
+
+// Ajoute un mouvement à la file d'attente hors ligne (sera synchronisé au retour du réseau)
+async function queueOfflineMouvement(payload){
+  try{
+    const db=await openScanDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(DB_STORE_PENDING_MVT,'readwrite');
+      tx.objectStore(DB_STORE_PENDING_MVT).add({...payload,queued_at:new Date().toISOString()});
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){
+    console.error('queueOfflineMouvement error',e);
+    return false;
+  }
+}
+async function getPendingMouvements(){
+  try{
+    const db=await openScanDB();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(DB_STORE_PENDING_MVT,'readonly');
+      const req=tx.objectStore(DB_STORE_PENDING_MVT).getAll();
+      req.onsuccess=()=>resolve(req.result||[]);
+      req.onerror=()=>reject(req.error);
+    });
+  }catch(e){ return []; }
+}
+async function clearPendingMouvement(id){
+  try{
+    const db=await openScanDB();
+    const tx=db.transaction(DB_STORE_PENDING_MVT,'readwrite');
+    tx.objectStore(DB_STORE_PENDING_MVT).delete(id);
+  }catch(e){console.error('clearPendingMouvement error',e);}
+}
+function updateOfflineMvtBadge(n){
+  const tag=document.getElementById('offlineMvtBadge');
+  if(!tag) return;
+  tag.textContent=n+' mouvement'+(n>1?'s':'')+' en attente de synchronisation';
+  tag.style.display=n>0?'block':'none';
+}
+
+// Synchronise tous les mouvements enregistrés hors ligne dès que le réseau revient.
+// Applique la mise à jour de stock ET l'enregistrement du mouvement, dans l'ordre,
+// pour chaque mouvement en attente, dans l'ordre où ils ont été créés.
+async function syncPendingMouvements(){
+  if(!navigator.onLine) return;
+  const pending=await getPendingMouvements();
+  if(!pending.length) return;
+
+  toast('Synchronisation de '+pending.length+' mouvement(s) hors ligne...','warn');
+  for(const item of pending){
+    try{
+      const{data:currentProd}=await sb.from('produits').select('qty').eq('id',item.produit_id).single();
+      if(currentProd){
+        const newQty=item.type==='entree' ? currentProd.qty+item.qty : currentProd.qty-item.qty;
+        await sb.from('produits').update({qty:Math.max(newQty,0)}).eq('id',item.produit_id);
+      }
+      await sb.from('mouvements').insert({
+        produit_id:item.produit_id,type:item.type,qty:item.qty,
+        motif:item.motif,ref:item.ref,date:item.date,depot_id:item.depot_id,
+        user_name:item.user_name,company_id:item.company_id
+      });
+      await clearPendingMouvement(item.id);
+    }catch(e){
+      console.error('sync mouvement failed',item,e);
+      // laissé en file, nouvelle tentative au prochain retour réseau
+    }
+  }
+  await loadAllData();
+  await updatePendingBadges();
+  toast('Mouvements hors ligne synchronisés !');
+}
+window.addEventListener('online',syncPendingMouvements);
+window.addEventListener('online',()=>{ hideOfflineBanner(); if(COMPANY_ID) loadAllData(); });
+window.addEventListener('offline',()=>{ toast('📡 Connexion perdue — passage en mode hors ligne.','warn'); });
+
+// Tente de charger la dernière copie locale connue si le réseau est indisponible.
+// Retourne true si une copie locale a pu être utilisée, false sinon.
+async function loadFromOfflineCacheIfAvailable(){
+  const cached=await loadOfflineCache();
+  if(!cached || cached.company_id!==COMPANY_ID){
+    showOfflineBanner(false);
+    return false;
+  }
+  CACHE=cached.data;
+  fillDS();
+  updateBadge();
+  updateCreditBadge();
+  showOfflineBanner(true,cached.saved_at);
+  return true;
+}
+
+function showOfflineBanner(hasData,savedAt){
+  const box=document.getElementById('offlineBannerBox');
+  if(!box) return;
+  if(hasData){
+    const savedDate=savedAt?new Date(savedAt).toLocaleString('fr-FR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+    box.innerHTML='<div class="betaBanner warn">📡 <b>Mode hors ligne</b> — données affichées depuis la dernière synchronisation ('+savedDate+'). Les nouvelles actions seront envoyées dès le retour du réseau.</div>';
+  } else {
+    box.innerHTML='<div class="betaBanner over">📡 <b>Hors ligne</b> — aucune donnée locale disponible pour le moment. Connectez-vous au moins une fois avec internet pour activer la consultation hors ligne.</div>';
+  }
+  box.style.display='block';
+}
+function hideOfflineBanner(){
+  const box=document.getElementById('offlineBannerBox');
+  if(box){ box.innerHTML=''; box.style.display='none'; }
+}
+
+// Tente de synchroniser tous les scans en attente dès que le réseau revient
+async function syncPendingScans(){
+  if(!navigator.onLine) return;
+  const pending=await getPendingScans();
+  if(!pending.length) return;
+  toast('Synchronisation de '+pending.length+' scan(s) hors-ligne...','warn');
+  for(const item of pending){
+    try{
+      await processScannedBarcode(item.barcode,item.context,true);
+      await clearPendingScan(item.id);
+    }catch(e){
+      console.error('sync scan failed',item,e);
+      // on laisse en file, on réessaiera au prochain retour réseau
+    }
+  }
+  await updatePendingBadges();
+  toast('Scans hors-ligne synchronisés !');
+}
+window.addEventListener('online',syncPendingScans);
+
+// ---- Détection de la caméra arrière ----
+async function getBackCameraId(){
+  try{
+    const cams=await Html5Qrcode.getCameras();
+    if(!cams||!cams.length) return null;
+    const back=cams.find(c=>/back|arrière|rear|environment/i.test(c.label));
+    return back?back.id:cams[cams.length-1].id;
+  }catch(e){
+    console.error('getBackCameraId error',e);
+    return null;
+  }
+}
+
+// ---- Ouverture / fermeture de la modale scanner ----
+async function openScanner(context){
+  // Vérifie le quota AVANT de demander l'accès caméra (évite d'ouvrir puis refermer aussitôt)
+  if(!scannerIsUnlimited()){
+    await loadScanUsageToday();
+    if(SCAN_USAGE_TODAY>=SCAN_DAILY_LIMIT_FREE){
+      showUpsellModal('scanner');
+      return;
+    }
+  }
+
+  SCAN_CONTEXT=context;
+  const statusEl=document.getElementById('scanStatus');
+  const offlineTag=document.getElementById('scanOfflineTag');
+  statusEl.textContent='Ouverture de la caméra...';
+  offlineTag.style.display=navigator.onLine?'none':'inline-flex';
+  openScanOvl();
+
+  try{
+    if(!SCAN_CAMERA_ID) SCAN_CAMERA_ID=await getBackCameraId();
+    if(!SCAN_CAMERA_ID){
+      statusEl.textContent='Aucune caméra détectée sur cet appareil.';
+      toast('Impossible d\'accéder à la caméra.','err');
+      return;
+    }
+    SCAN_INSTANCE=new Html5Qrcode('scanReader');
+    await SCAN_INSTANCE.start(
+      SCAN_CAMERA_ID,
+      { fps:10, qrbox:{width:250,height:250}, aspectRatio:1.0 },
+      onScanDetected,
+      ()=>{} // erreurs de frame ignorées silencieusement (normal entre deux détections)
+    );
+    statusEl.textContent='Visez le code-barres dans le cadre';
+  }catch(e){
+    console.error('openScanner error',e);
+    statusEl.textContent='Impossible d\'ouvrir la caméra. Vérifiez les autorisations.';
+    toast('Accès caméra refusé ou indisponible.','err');
+  }
+}
+function openScanOvl(){document.getElementById('scanOvl').classList.add('op');}
+async function closeScanner(){
+  document.getElementById('scanOvl').classList.remove('op');
+  if(SCAN_INSTANCE){
+    try{
+      await SCAN_INSTANCE.stop();
+      SCAN_INSTANCE.clear();
+    }catch(e){ /* déjà arrêté */ }
+    SCAN_INSTANCE=null; // libère la caméra pour économiser la batterie
+  }
+}
+
+// Confirmation sonore + vibration à la détection d'un code
+function playScanFeedback(){
+  try{
+    if(navigator.vibrate) navigator.vibrate(120);
+  }catch(e){}
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value=880;
+    gain.gain.setValueAtTime(0.15,ctx.currentTime);
+    osc.start();
+    osc.stop(ctx.currentTime+0.12);
+  }catch(e){}
+}
+
+// Déclenché par html5-qrcode dès qu'un code est détecté
+async function onScanDetected(decodedText){
+  playScanFeedback();
+  document.getElementById('scanStatus').textContent='Code détecté : '+decodedText;
+  await closeScanner(); // ferme la caméra tout de suite (batterie)
+  const allowed=await tryConsumeScanQuota();
+  if(!allowed) return; // quota atteint entre l'ouverture et la détection (cas rare) : on bloque ici aussi
+  await handleScanSuccess(decodedText);
+}
+
+// Point d'entrée principal : décide quoi faire selon le contexte d'ouverture
+async function handleScanSuccess(decodedText){
+  const context=SCAN_CONTEXT;
+
+  if(!navigator.onLine){
+    await queueOfflineScan({barcode:decodedText,context});
+    await updatePendingBadges();
+    toast('📡 Hors ligne : scan enregistré, sera synchronisé au retour du réseau.','warn');
+    return;
+  }
+
+  await processScannedBarcode(decodedText,context,false);
+}
+
+// Traite réellement un code-barres scanné (utilisé en direct ET lors de la sync offline)
+async function processScannedBarcode(decodedText,context,isSync){
+  try{
+    const{data:existing,error}=await sb.from('produits').select('*').eq('barcode',decodedText).eq('company_id',COMPANY_ID).maybeSingle();
+    if(error){
+      if(!isSync) toast('Erreur lors de la recherche du produit.','err');
+      throw error;
+    }
+
+    if(context==='prodModal'){
+      // Le scan vient du formulaire produit : on remplit juste le champ
+      const el=document.getElementById('pbarcode');
+      if(el) el.value=decodedText;
+      if(existing && !isSync) toast('⚠️ Ce code-barres est déjà utilisé par « '+existing.nom+' ».','warn');
+      return;
+    }
+
+    if(context==='mouvements'){
+      if(existing){
+        // Produit trouvé : on le présélectionne dans le formulaire de mouvement
+        await loadAllData();
+        fillMvtSelect();
+        const sel=document.getElementById('mvtprod');
+        if(sel){ sel.value=existing.id; updMvtInfo(); }
+        if(!isSync) toast('Produit trouvé : '+existing.nom);
+      } else {
+        if(!isSync) toast('Aucun produit avec ce code-barres. Créez-le d\'abord.','warn');
+      }
+      return;
+    }
+
+    // context === 'produits' (page catalogue) : logique demandée —
+    // existe déjà → on propose de mettre à jour le stock ; sinon → on propose de créer le produit
+    if(existing){
+      if(isSync){
+        // En resynchronisation automatique, pas de confirmation possible : on incrémente de 1 par défaut
+        await sb.from('produits').update({qty:(existing.qty||0)+1}).eq('id',existing.id);
+        return;
+      }
+      askConfirm(
+        'Produit trouvé : '+existing.nom,
+        'Stock actuel : '+existing.qty+'. Ajouter 1 unité au stock ?',
+        async()=>{
+          const{error:updErr}=await sb.from('produits').update({qty:(existing.qty||0)+1}).eq('id',existing.id);
+          if(updErr){ toast('Erreur lors de la mise à jour du stock.','err'); return; }
+          await loadAllData(); renderProds(); renderDash();
+          toast('Stock mis à jour : '+existing.nom+' → '+((existing.qty||0)+1));
+        }
+      );
+    } else {
+      if(isSync) return; // création impossible sans confirmation utilisateur
+      toast('Nouveau code-barres détecté. Créez le produit correspondant.','warn');
+      openProdModal();
+      setTimeout(()=>{ const el=document.getElementById('pbarcode'); if(el) el.value=decodedText; },50);
+    }
+  }catch(e){
+    console.error('processScannedBarcode error',e);
+    if(!isSync) toast('Erreur réseau lors du traitement du scan.','err');
+    throw e;
+  }
+}
+
+let CACHE={produits:[],depots:[],mouvements:[],factures:[],clients:[],debts:[]};
+let SALES_HISTORY_CACHE={}; // { produit_id: [{date,qty}, ...] } — alimenté à la demande pour les prévisions
+let SALES_HISTORY_LOADED_AT=null;
+
+// ===== ABONNEMENT (SUB) =====
+// SUB contient toutes les infos de l'abonnement Supabase de l'entreprise courante.
+let SUB=null;
+
+const PLAN_LABELS={beta:'Gratuit',free:'Gratuit',pro:'Pro',premium:'Premium'};
+const BETA_TRIAL_DAYS=30; // durée de la période d'essai à partir de starts_at
+
+// Charge l'abonnement de l'entreprise depuis Supabase, calcule les jours restants
+// de la période d'essai (bêta/gratuit) et stocke tout dans SUB.
+async function loadAbonnement(){
+  try{
+    const{data,error}=await sb.from('abonnements').select('*').eq('company_id',COMPANY_ID).single();
+    if(error||!data){
+      // Pas d'abonnement trouvé : on applique des valeurs par défaut sûres (plan gratuit)
+      SUB={
+        id:null,company_id:COMPANY_ID,plan:'beta',status:'active',
+        starts_at:null,expires_at:null,
+        max_utilisateurs:2,max_depots:1,limite_produits:50,limite_factures_pdf:false,
+        joursRestants:null,essaiTermine:false
+      };
+      renderBetaBanner();
+      return SUB;
+    }
+    SUB={...data};
+
+    // Calcul des jours restants de la période d'essai, basé sur starts_at + BETA_TRIAL_DAYS
+    let joursRestants=null;
+    let essaiTermine=false;
+    if((SUB.plan==='beta'||SUB.plan==='free') && SUB.starts_at){
+      const debut=new Date(SUB.starts_at);
+      const fin=new Date(debut.getTime()+BETA_TRIAL_DAYS*24*60*60*1000);
+      const maintenant=new Date();
+      const msRestants=fin.getTime()-maintenant.getTime();
+      joursRestants=Math.ceil(msRestants/(24*60*60*1000));
+      essaiTermine=joursRestants<=0;
+    }
+    SUB.joursRestants=joursRestants;
+    SUB.essaiTermine=essaiTermine;
+
+    renderBetaBanner();
+    return SUB;
+  }catch(e){
+    console.error('loadAbonnement error',e);
+    SUB={
+      id:null,company_id:COMPANY_ID,plan:'beta',status:'active',
+      starts_at:null,expires_at:null,
+      max_utilisateurs:2,max_depots:1,limite_produits:50,limite_factures_pdf:false,
+      joursRestants:null,essaiTermine:false
+    };
+    renderBetaBanner();
+    return SUB;
+  }
+}
+
+// Affiche la bannière bêta sur le tableau de bord
+function renderBetaBanner(){
+  const box=document.getElementById('betaBannerBox');
+  if(!box||!SUB) return;
+
+  // Plans payants actifs : pas de bannière d'essai
+  if(SUB.plan==='pro'||SUB.plan==='premium'){
+    box.innerHTML='';
+    return;
+  }
+
+  if(SUB.joursRestants===null){
+    // Pas de date de début connue : message neutre
+    box.innerHTML='<div class="betaBanner active">🎁 <b>Période d\'essai gratuite en cours</b> — profitez de toutes les fonctionnalités de base.</div>';
+    return;
+  }
+
+  if(SUB.essaiTermine){
+    box.innerHTML='<div class="betaBanner over">⏰ <b>Période bêta terminée.</b> Certaines fonctionnalités sont désormais limitées. <button class="btn bp bxs" style="margin-left:6px" onclick="openSubModal()">Passer au plan Pro</button></div>';
+  } else if(SUB.joursRestants<=7){
+    box.innerHTML='<div class="betaBanner warn">⏳ Il vous reste <b>'+SUB.joursRestants+' jour'+(SUB.joursRestants>1?'s':'')+'</b> de période d\'essai. <button class="btn bp bxs" style="margin-left:6px" onclick="openSubModal()">Passer au plan Pro</button></div>';
+  } else {
+    box.innerHTML='<div class="betaBanner active">🎁 Il vous reste <b>'+SUB.joursRestants+' jours</b> de période d\'essai gratuite.</div>';
+  }
+}
+
+// Variables d'état pour le plan sélectionné globalement
+let SELECTED_SUB_PLAN = '';       // libellé affiché ('Pro' / 'Premium')
+let SELECTED_SUB_PLAN_KEY = '';   // clé technique ('pro' / 'premium'), utilisée par l'Edge Function
+
+// ⚠️ Clé PUBLIQUE FedaPay uniquement — jamais la clé secrète ici.
+// Remplace cette valeur par ta clé publique FedaPay (pk_live_... ou pk_sandbox_... pour tester).
+const FEDAPAY_PUBLIC_KEY = 'REMPLACE_PAR_TA_CLE_PUBLIQUE_FEDAPAY';
+
+// URL de ton Edge Function Supabase (à adapter avec ton vrai project ref une fois déployée)
+const VERIFY_PAYMENT_URL = SUPABASE_URL + '/functions/v1/verify-fedapay-payment';
+const SECURE_SIGNUP_URL = SUPABASE_URL + '/functions/v1/secure-signup';
+
+const PLAN_PRICES_FCFA = { pro: 10000, premium: 25000 };
+
+// ===== NAVIGATIONS DE LA MODALE D'ABONNEMENT =====
+function openSubModal() {
+  goToSubStep1();
+  openOvl('subOvl');
+}
+function goToSubStep1() {
+  document.getElementById('subStep1').style.display = 'block';
+  document.getElementById('subStep2').style.display = 'none';
+}
+function goToSubStep2(planName) {
+  SELECTED_SUB_PLAN = planName;
+  SELECTED_SUB_PLAN_KEY = planName.toLowerCase(); // 'Pro' -> 'pro', 'Premium' -> 'premium'
+  document.getElementById('selectedPlanLabel').textContent = planName;
+  document.getElementById('selectedPlanPrice').textContent = fmtN(PLAN_PRICES_FCFA[SELECTED_SUB_PLAN_KEY]||0);
+  document.getElementById('paymentStatusBox').innerHTML='';
+  document.getElementById('subStep1').style.display = 'none';
+  document.getElementById('subStep2').style.display = 'block';
+}
+
+// Repli manuel (support WhatsApp) si le paiement en ligne ne fonctionne pas
+function triggerPayment(method) {
+  const numero='+229 01 64 59 63 81';
+  toast('📞 Contactez le '+numero+' sur WhatsApp pour finaliser votre abonnement '+SELECTED_SUB_PLAN+' manuellement.','warn');
+}
+
+// Lance le widget de paiement FedaPay Checkout pour le plan sélectionné
+function startFedapayCheckout(){
+  if(!SELECTED_SUB_PLAN_KEY || !PLAN_PRICES_FCFA[SELECTED_SUB_PLAN_KEY]){
+    toast('Veuillez sélectionner un plan avant de payer.','err');
+    return;
+  }
+  if(typeof FedaPay==='undefined'){
+    toast('Le module de paiement n\'a pas pu se charger. Vérifiez votre connexion.','err');
+    return;
+  }
+
+  const statusBox=document.getElementById('paymentStatusBox');
+  statusBox.innerHTML='';
+
+  FedaPay.init({
+    public_key: FEDAPAY_PUBLIC_KEY,
+    transaction: {
+      amount: PLAN_PRICES_FCFA[SELECTED_SUB_PLAN_KEY],
+      description: 'Abonnement GestiStock Pro — Plan '+SELECTED_SUB_PLAN,
+      currency: { iso: 'XOF' },
+      custom_metadata: { company_id: COMPANY_ID, plan: SELECTED_SUB_PLAN_KEY }
+    },
+    customer: {
+      email: (CU && CU.email) ? CU.email : undefined,
+      firstname: (PROFILE && PROFILE.nom) ? PROFILE.nom.split(' ')[0] : undefined,
+    },
+    onComplete: function(response){
+      // response.reason === FedaPay.CHECKOUT_COMPLETED signifie que le CLIENT a terminé
+      // le parcours de paiement — mais NE CONFIRME PAS que l'argent a réellement été reçu.
+      // On ne fait JAMAIS confiance à ceci seul : on redemande systématiquement à FedaPay
+      // via l'Edge Function, qui interroge l'API FedaPay directement.
+      if(response && response.transaction && response.transaction.id){
+        verifyAndActivateSubscription(response.transaction.id, SELECTED_SUB_PLAN_KEY);
+      } else {
+        statusBox.innerHTML='<div style="color:#c0392b">Paiement annulé ou non finalisé.</div>';
+      }
+    }
+  }).open();
+}
+
+// Appelle l'Edge Function Supabase pour vérifier RÉELLEMENT le paiement côté serveur,
+// puis active l'abonnement seulement si FedaPay confirme.
+async function verifyAndActivateSubscription(transactionId, planKey){
+  const statusBox=document.getElementById('paymentStatusBox');
+  const btn=document.getElementById('btnPayFedapay');
+  statusBox.innerHTML='<span class="spin dark"></span> Vérification du paiement en cours...';
+  if(btn) btn.disabled=true;
+
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    const res=await fetch(VERIFY_PAYMENT_URL,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+(session?session.access_token:'')
+      },
+      body:JSON.stringify({transaction_id:transactionId, plan:planKey, company_id:COMPANY_ID})
+    });
+    const result=await res.json();
+
+    if(btn) btn.disabled=false;
+
+    if(result.success){
+      statusBox.innerHTML='<div style="color:#2d6a4f;font-weight:700">✅ '+result.message+'</div>';
+      toast('Abonnement '+planKey+' activé !');
+      await loadAbonnement(); // recharge SUB pour débloquer les fonctionnalités instantanément
+      updateScanQuotaDisplay();
+      updateWhatsappButtonsLockState();
+      setTimeout(()=>{ closeOvl('subOvl'); if(document.getElementById('pg-profil').style.display==='block') loadAbonnementTab(); },1800);
+    } else {
+      statusBox.innerHTML='<div style="color:#c0392b">❌ '+(result.message||result.error||'Paiement non confirmé.')+'</div>';
+    }
+  }catch(e){
+    console.error('verifyAndActivateSubscription error',e);
+    if(btn) btn.disabled=false;
+    statusBox.innerHTML='<div style="color:#c0392b">Erreur réseau lors de la vérification. Réessayez ou contactez le support.</div>';
+  }
+}
+
+// ===== AUTH =====
+function switchTab(t){
+  document.getElementById('loginForm').style.display=t==='login'?'block':'none';
+  document.getElementById('regForm').style.display=t==='reg'?'block':'none';
+  document.querySelectorAll('.atab').forEach((x,i)=>x.classList.toggle('on',i===(t==='login'?0:1)));
+}
+
+function setBtnLoading(btn, loading, loadingText, normalText){
+  if(loading){
+    btn.disabled=true;
+    btn.dataset.orig=normalText;
+    btn.innerHTML='<span class="spin"></span>'+loadingText;
+  } else {
+    btn.disabled=false;
+    btn.textContent=normalText;
+  }
+}
+
+function translateAuthError(msg){
+  if(!msg) return 'Une erreur est survenue. Réessayez.';
+  const m=msg.toLowerCase();
+  if(m.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if(m.includes('user already registered')||m.includes('already been registered')) return 'Cet email est déjà utilisé. Essayez de vous connecter.';
+  if(m.includes('password should be at least')||m.includes('password is too short')) return 'Le mot de passe doit contenir au moins 6 caractères.';
+  if(m.includes('invalid email')) return 'Adresse email invalide.';
+  if(m.includes('email not confirmed')) return 'Veuillez confirmer votre email avant de vous connecter.';
+  if(m.includes('rate limit')||m.includes('too many requests')) return 'Trop de tentatives. Patientez quelques minutes.';
+  if(m.includes('network')||m.includes('fetch')) return 'Problème de connexion internet. Vérifiez votre réseau.';
+  if(m.includes('jwt')||m.includes('session')) return 'Session expiree. Veuillez vous reconnecter.';
+  return msg;
+}
+
+async function doLogin(){
+  const email=document.getElementById('le').value.trim().toLowerCase();
+  const pwd=document.getElementById('lp').value;
+  const btn=document.getElementById('btnLogin');
+  const msg=document.getElementById('lmsg');
+  msg.style.color='#c0392b';
+  if(!email||!pwd){msg.textContent='Veuillez remplir l\'email et le mot de passe.';return;}
+  if(btn.disabled) return;
+  setBtnLoading(btn,true,'Connexion...','Se connecter');
+  msg.textContent='';
+  try{
+    const {error}=await sb.auth.signInWithPassword({email,password:pwd});
+    if(error){msg.textContent=translateAuthError(error.message);setBtnLoading(btn,false,'','Se connecter');return;}
+    await initApp();
+    setBtnLoading(btn,false,'','Se connecter');
+  }catch(e){
+    msg.textContent='Erreur réseau. Vérifiez votre connexion internet.';
+    setBtnLoading(btn,false,'','Se connecter');
+  }
+}
+
+async function doForgotPwd(){
+  const email=document.getElementById('le').value.trim().toLowerCase();
+  const msg=document.getElementById('lmsg');
+  msg.style.color='#c0392b';
+  if(!email){msg.textContent='Entrez d\'abord votre email ci-dessus, puis cliquez sur ce lien.';return;}
+  msg.style.color='#2d6a4f';
+  msg.textContent='Envoi en cours...';
+  try{
+    const{error}=await sb.auth.resetPasswordForEmail(email);
+    if(error){msg.style.color='#c0392b';msg.textContent=translateAuthError(error.message);return;}
+    msg.style.color='#2d6a4f';
+    msg.textContent='Email envoyé ! Vérifiez votre boîte mail (et les spams) pour réinitialiser votre mot de passe.';
+  }catch(e){
+    msg.style.color='#c0392b';
+    msg.textContent='Erreur réseau. Réessayez.';
+  }
+}
+
+async function doRegister(){
+  const company=document.getElementById('rcompany').value.trim();
+  const nom=document.getElementById('rn').value.trim();
+  const email=document.getElementById('re').value.trim().toLowerCase();
+  const pwd=document.getElementById('rp').value;
+  const btn=document.getElementById('btnReg');
+  const msg=document.getElementById('rm');
+  msg.style.color='#c0392b';
+  if(!company||!nom||!email||!pwd){msg.textContent='Veuillez remplir tous les champs.';return;}
+  if(pwd.length<6){msg.textContent='Le mot de passe doit contenir au moins 6 caractères.';return;}
+  if(!email.includes('@')||!email.includes('.')){msg.textContent='Adresse email invalide.';return;}
+  if(btn.disabled) return;
+  setBtnLoading(btn,true,'Création...','Creer mon compte');
+  msg.textContent='';
+
+  try{
+    // Étape 1 : créer uniquement le compte d'authentification (aucune donnée
+    // sensible envoyée ici — le rôle et l'entreprise seront décidés par le serveur)
+    const {data:authData,error:authErr}=await sb.auth.signUp({email,password:pwd});
+    if(authErr){
+      setBtnLoading(btn,false,'','Creer mon compte');
+      msg.textContent=translateAuthError(authErr.message);
+      console.error('authErr',authErr);
+      return;
+    }
+    const userId=authData.user?.id;
+    if(!userId){
+      setBtnLoading(btn,false,'','Creer mon compte');
+      msg.textContent='Erreur lors de la création du compte. Réessayez.';
+      return;
+    }
+
+    // Étape 2 : connexion immédiate pour obtenir un jeton valide à transmettre au serveur
+    const{error:loginErr}=await sb.auth.signInWithPassword({email,password:pwd});
+    if(loginErr){
+      setBtnLoading(btn,false,'','Creer mon compte');
+      msg.textContent='Compte créé mais connexion impossible. Réessayez de vous connecter.';
+      return;
+    }
+
+    // Étape 3 : demander au SERVEUR de créer l'entreprise + le profil admin.
+    // Le rôle 'admin' et le company_id sont décidés côté serveur, jamais par ce code.
+    const{data:{session}}=await sb.auth.getSession();
+    const res=await fetch(SECURE_SIGNUP_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(session?session.access_token:'')},
+      body:JSON.stringify({mode:'new_company',user_id:userId,nom,company_name:company})
+    });
+    const result=await res.json();
+
+    if(!result.success){
+      setBtnLoading(btn,false,'','Creer mon compte');
+      msg.textContent=result.error||'Impossible de finaliser la création du compte.';
+      console.error('secure-signup error',result);
+      return;
+    }
+
+    msg.style.color='#2d6a4f';
+    msg.textContent='Compte créé ! Connexion en cours...';
+    setTimeout(async()=>{
+      setBtnLoading(btn,false,'','Creer mon compte');
+      await initApp();
+    },800);
+  }catch(e){
+    setBtnLoading(btn,false,'','Creer mon compte');
+    msg.textContent='Erreur réseau. Vérifiez votre connexion internet et réessayez.';
+  }
+}
+
+// Enregistre une trace de connexion dans la table 'connexions' (best-effort, n'affecte pas le login si ça échoue)
+async function logConnexion(){
+  try{
+    await sb.from('connexions').insert({
+      user_id:CU.id,company_id:COMPANY_ID,user_name:PROFILE.nom,
+      created_at:new Date().toISOString()
+    });
+  }catch(e){
+    console.warn('logConnexion: table connexions probablement absente',e);
+  }
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  CU=null;PROFILE=null;COMPANY_ID=null;SUB=null;
+  document.getElementById('auth').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+async function initApp(){
+  try{
+    const {data:{user}}=await sb.auth.getUser();
+    if(!user){return;}
+    CU=user;
+    const {data:profile,error}=await sb.from('profiles').select('*').eq('id',user.id).single();
+    if(error||!profile){
+      document.getElementById('lmsg').style.color='#c0392b';
+      document.getElementById('lmsg').textContent='Profil introuvable. Contactez le support.';
+      console.error('profileErr',error);
+      return;
+    }
+    PROFILE=profile;
+    COMPANY_ID=profile.company_id;
+
+    document.getElementById('auth').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('uname').textContent=profile.nom;
+    document.getElementById('urole').textContent={admin:'Administrateur',gerant:'Gérant',vendeur:'Vendeur',viewer:'Lecteur'}[profile.role]||profile.role;
+    document.querySelectorAll('.adm').forEach(x=>x.style.display=profile.role==='admin'?'':'none');
+    if(profile.role==='viewer'){document.getElementById('mvtForm').style.display='none';document.getElementById('btnAdd').style.display='none';}
+    if(profile.role==='vendeur'){
+      document.getElementById('mbin').style.display='none';
+      document.getElementById('vendeurNote').style.display='block';
+      document.getElementById('btnAdd').style.display='none';
+      setMvt('sortie');
+    }
+
+    document.getElementById('mvtdate').value=new Date().toISOString().split('T')[0];
+    document.getElementById('fdate').value=new Date().toISOString().split('T')[0];
+
+    await loadAbonnement();
+    await loadScanUsageToday();
+    updateScanQuotaDisplay();
+    updateWhatsappButtonsLockState();
+    await loadAllData();
+    showPage('dashboard');
+    logConnexion();
+    await updatePendingBadges();
+    if(navigator.onLine){ syncPendingScans(); syncPendingMouvements(); }
+  }catch(e){
+    console.error('initApp error', e);
+    toast('Erreur de chargement. Rechargez la page.','err');
+  }
+}
+
+(async()=>{
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(session){ await initApp(); return; }
+    // Pas de session : on vérifie si l'URL contient un code d'invitation
+    await checkInviteCodeInUrl();
+  }catch(e){console.error('session check error', e);}
+})();
+
+// ===== INVITATIONS D'ÉQUIPE =====
+let PENDING_INVITE=null; // invitation en cours de vérification (avant inscription)
+
+function genInviteCode(){
+  // Code lisible et suffisamment unique (12 caractères alphanumériques)
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code='';
+  for(let i=0;i<12;i++) code+=chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+
+function openInviteModal(){
+  document.getElementById('inviteStepForm').style.display='block';
+  document.getElementById('inviteStepResult').style.display='none';
+  document.getElementById('inviteRole').value='vendeur';
+  openOvl('inviteOvl');
+}
+
+async function generateInvite(){
+  const role=document.getElementById('inviteRole').value;
+  const btn=event.target;
+  if(btn.disabled) return;
+  const origText=btn.textContent;
+  setBtnLoading(btn,true,'Génération...',origText);
+  try{
+    const code=genInviteCode();
+    const{error}=await sb.from('invitations').insert({
+      code,company_id:COMPANY_ID,role,invited_by:CU.id,status:'pending'
+    });
+    setBtnLoading(btn,false,'',origText);
+    if(error){
+      toast('Erreur lors de la génération du lien: '+error.message,'err');
+      console.error(error);
+      return;
+    }
+    const link=window.location.origin+window.location.pathname+'?invite='+code;
+    document.getElementById('inviteLinkOutput').value=link;
+    document.getElementById('inviteResultMsg').textContent='Rôle attribué : '+(ROLE_OPTIONS[role]||role)+'. Ce lien ne fonctionne qu\'une seule fois.';
+    document.getElementById('inviteStepForm').style.display='none';
+    document.getElementById('inviteStepResult').style.display='block';
+  }catch(e){
+    setBtnLoading(btn,false,'',origText);
+    toast('Erreur réseau. Réessayez.','err');
+  }
+}
+
+function copyInviteLink(){
+  const input=document.getElementById('inviteLinkOutput');
+  input.select();
+  input.setSelectionRange(0,99999);
+  try{
+    navigator.clipboard.writeText(input.value);
+    toast('Lien copié !');
+  }catch(e){
+    document.execCommand('copy');
+    toast('Lien copié !');
+  }
+}
+
+function shareInviteWhatsapp(){
+  const link=document.getElementById('inviteLinkOutput').value;
+  const text=encodeURIComponent('Bonjour ! Voici votre lien pour rejoindre notre espace GestiStock Pro : '+link);
+  window.open('https://wa.me/?text='+text,'_blank');
+}
+
+// Vérifie si l'URL contient ?invite=CODE et affiche l'écran de rejoindre si le code est valide
+async function checkInviteCodeInUrl(){
+  const params=new URLSearchParams(window.location.search);
+  const code=params.get('invite');
+  if(!code) return;
+  try{
+    const{data,error}=await sb.from('invitations').select('*,companies(nom)').eq('code',code).eq('status','pending').single();
+    if(error||!data){
+      // Code invalide, déjà utilisé, ou expiré : on reste sur l'écran de connexion normal
+      return;
+    }
+    PENDING_INVITE=data;
+    document.getElementById('authTabs').style.display='none';
+    document.getElementById('loginForm').style.display='none';
+    document.getElementById('regForm').style.display='none';
+    document.getElementById('inviteJoinForm').style.display='block';
+    const companyName=(data.companies&&data.companies.nom)?data.companies.nom:'cette entreprise';
+    const roleLabel=ROLE_OPTIONS[data.role]||data.role;
+    document.getElementById('inviteJoinInfo').innerHTML='🎉 Vous êtes invité(e) à rejoindre <b>'+companyName+'</b> en tant que <b>'+roleLabel+'</b>. Créez votre mot de passe pour continuer.';
+  }catch(e){
+    console.error('checkInviteCodeInUrl error',e);
+  }
+}
+
+async function doJoinViaInvite(){
+  if(!PENDING_INVITE){toast('Invitation introuvable. Demandez un nouveau lien.','err');return;}
+  const nom=document.getElementById('jn').value.trim();
+  const email=document.getElementById('je').value.trim().toLowerCase();
+  const pwd=document.getElementById('jp').value;
+  const btn=document.getElementById('btnJoin');
+  const msg=document.getElementById('jm');
+  msg.style.color='#c0392b';
+  if(!nom||!email||!pwd){msg.textContent='Veuillez remplir tous les champs.';return;}
+  if(pwd.length<6){msg.textContent='Le mot de passe doit contenir au moins 6 caractères.';return;}
+  if(!email.includes('@')||!email.includes('.')){msg.textContent='Adresse email invalide.';return;}
+  if(btn.disabled) return;
+  setBtnLoading(btn,true,'Création...','Rejoindre l\'entreprise');
+  msg.textContent='';
+
+  try{
+    // Étape 1 : compte d'authentification seul, sans rôle ni company_id envoyés
+    const{data:authData,error:authErr}=await sb.auth.signUp({email,password:pwd});
+    if(authErr){
+      setBtnLoading(btn,false,'','Rejoindre l\'entreprise');
+      msg.textContent=translateAuthError(authErr.message);
+      return;
+    }
+    const userId=authData.user?.id;
+    if(!userId){
+      setBtnLoading(btn,false,'','Rejoindre l\'entreprise');
+      msg.textContent='Erreur lors de la création du compte. Réessayez.';
+      return;
+    }
+
+    // Étape 2 : connexion pour obtenir un jeton valide
+    const{error:loginErr}=await sb.auth.signInWithPassword({email,password:pwd});
+    if(loginErr){
+      setBtnLoading(btn,false,'','Rejoindre l\'entreprise');
+      msg.style.color='#c0392b';
+      msg.textContent='Compte créé mais connexion automatique impossible. Connectez-vous manuellement.';
+      return;
+    }
+
+    // Étape 3 : le SERVEUR vérifie le code d'invitation et reprend le rôle/company_id
+    // enregistrés dans l'invitation — jamais ce que ce code client pourrait prétendre.
+    const{data:{session}}=await sb.auth.getSession();
+    const res=await fetch(SECURE_SIGNUP_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(session?session.access_token:'')},
+      body:JSON.stringify({mode:'join_invite',user_id:userId,nom,invite_code:PENDING_INVITE.code})
+    });
+    const result=await res.json();
+
+    if(!result.success){
+      setBtnLoading(btn,false,'','Rejoindre l\'entreprise');
+      msg.style.color='#c0392b';
+      msg.textContent=result.error||'Impossible de rejoindre l\'entreprise. L\'invitation est peut-être expirée.';
+      console.error('secure-signup join error',result);
+      return;
+    }
+
+    msg.style.color='#2d6a4f';
+    msg.textContent='Compte créé ! Connexion en cours...';
+    // Nettoie l'URL pour retirer le paramètre d'invitation
+    window.history.replaceState({},'',window.location.pathname);
+    setBtnLoading(btn,false,'','Rejoindre l\'entreprise');
+    await initApp();
+  }catch(e){
+    setBtnLoading(btn,false,'','Rejoindre l\'entreprise');
+    msg.textContent='Erreur réseau. Vérifiez votre connexion internet et réessayez.';
+  }
+}
+
+async function loadAllData(){
+  try{
+    if(!navigator.onLine){
+      // Pas de réseau dès le départ : on charge directement la dernière copie locale connue
+      await loadFromOfflineCacheIfAvailable();
+      return;
+    }
+    const [p,d,m,f,cl,db]=await Promise.all([
+      sb.from('produits').select('*').order('nom'),
+      sb.from('depots').select('*').order('nom'),
+      sb.from('mouvements').select('*').order('created_at',{ascending:false}).limit(100),
+      sb.from('factures').select('*').order('created_at',{ascending:false}),
+      sb.from('clients').select('*').order('nom'),
+      sb.from('debts').select('*').order('created_at',{ascending:false})
+    ]);
+    CACHE.produits=p.data||[];
+    CACHE.depots=d.data||[];
+    CACHE.mouvements=m.data||[];
+    CACHE.factures=f.data||[];
+    CACHE.clients=cl.data||[];
+    CACHE.debts=db.data||[];
+    fillDS();
+    updateBadge();
+    updateCreditBadge();
+    checkStockAlerts();
+    await saveOfflineCache(); // copie locale rafraîchie pour la prochaine coupure réseau
+    hideOfflineBanner();
+  }catch(e){
+    console.error('loadAllData error', e);
+    // Le réseau a coupé en cours de route (ou Supabase est injoignable) :
+    // on tente de retomber sur la dernière copie locale plutôt que de bloquer l'utilisateur.
+    const fellBackToCache=await loadFromOfflineCacheIfAvailable();
+    if(!fellBackToCache){
+      toast('Erreur de chargement des données. Vérifiez votre connexion.','err');
+    }
+  }
+}
+
+function showPage(p,el){
+  document.querySelectorAll('.pg').forEach(x=>x.style.display='none');
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
+  const pg=document.getElementById('pg-'+p);if(pg)pg.style.display='block';
+  if(el)el.classList.add('on');
+  const titles={dashboard:'Tableau de bord',produits:'Produits',mouvements:'Mouvements',factures:'Factures',credits:'Crédits clients',rapports:'Rapports',alertes:'Alertes',depots:'Dépôts',utilisateurs:'Équipe',profil:'Mon profil'};
+  document.getElementById('ptitle').textContent=titles[p]||p;
+  if(p==='dashboard'){renderDash();renderBetaBanner();updateWhatsappButtonsLockState();}
+  else if(p==='produits'){renderProds();updateScanQuotaDisplay();updateWhatsappButtonsLockState();}
+  else if(p==='mouvements'){fillMvtSelect();renderMvts();}
+  else if(p==='factures')renderFacts();
+  else if(p==='credits')renderCredits();
+  else if(p==='rapports')renderRapport();
+  else if(p==='alertes')renderAlertes();
+  else if(p==='depots')renderDepots();
+  else if(p==='utilisateurs'){renderUsers();renderConnexions();}
+  else if(p==='profil')renderProfil();
+  closeSB();
+}
+function openSB(){document.getElementById('sb').style.transform='translateX(0)';document.getElementById('sbbg').style.display='block';}
+function closeSB(){document.getElementById('sb').style.transform='';document.getElementById('sbbg').style.display='none';}
+
+// Accorde simplement l'unité de mesure au pluriel (règle française basique : +s si qty>1),
+// avec quelques exceptions courantes déjà invariables ou irrégulières.
+const UNITE_INVARIABLE=['kg','litre','l'];
+function pluralizeUnite(unite,qty){
+  if(!unite) return '';
+  const u=unite.trim();
+  if(!u) return '';
+  if(Math.abs(qty)<=1) return u;
+  const lower=u.toLowerCase();
+  if(UNITE_INVARIABLE.includes(lower)) return u;
+  if(u.endsWith('s')||u.endsWith('x')) return u; // déjà pluriel/invariable
+  return u+'s';
+}
+
+function getStatus(p){if(p.qty<=0)return{l:'Rupture',c:'#c0392b',k:'out'};if(p.qty<=(p.seuil||5))return{l:'Faible',c:'#d4a017',k:'low'};return{l:'En stock',c:'#2d6a4f',k:'ok'};}
+
+// ============================================================
+// PRÉDICTION DE RUPTURE DE STOCK — Moyenne mobile pondérée (30 jours)
+// ============================================================
+const FORECAST_WINDOW_DAYS=30;
+// Seuils d'alerte, exprimés en jours restants avant rupture estimée
+const FORECAST_CRITICAL_DAYS=3;   // rouge : rupture très proche
+const FORECAST_WARNING_DAYS=7;    // orange : à surveiller
+const FORECAST_MIN_DATA_POINTS=3; // en dessous, on considère l'historique insuffisant
+
+/**
+ * Calcule la vitesse de vente quotidienne moyenne d'un produit via une
+ * moyenne mobile PONDÉRÉE : les ventes récentes comptent plus que les
+ * anciennes (poids linéaire croissant du jour le plus ancien au plus récent).
+ *
+ * @param {Array<{date:string, qty:number}>} salesHistory - ventes quotidiennes
+ *        (une entrée par jour où une vente a eu lieu ; les jours sans vente
+ *        n'ont pas besoin d'entrée, ils comptent comme 0)
+ * @param {number} windowDays - taille de la fenêtre d'analyse en jours
+ * @returns {number} vitesse de vente moyenne par jour (peut être 0)
+ */
+function computeWeightedDailyRate(salesHistory,windowDays=FORECAST_WINDOW_DAYS){
+  if(!salesHistory||!salesHistory.length) return 0;
+
+  const today=new Date(); today.setHours(0,0,0,0);
+  const startDate=new Date(today); startDate.setDate(startDate.getDate()-(windowDays-1));
+
+  // Construit un tableau dense jour par jour (0 si pas de vente ce jour-là),
+  // nécessaire pour que la pondération reflète correctement le temps qui passe.
+  const dailyQty=new Array(windowDays).fill(0);
+  let earliestDayIndex=windowDays; // premier jour (dans la fenêtre) où une vente est connue
+  salesHistory.forEach(entry=>{
+    const d=new Date(entry.date); d.setHours(0,0,0,0);
+    const diffDays=Math.round((d.getTime()-startDate.getTime())/86400000);
+    if(diffDays>=0 && diffDays<windowDays){
+      dailyQty[diffDays]+=Number(entry.qty)||0;
+      if(diffDays<earliestDayIndex) earliestDayIndex=diffDays;
+    }
+  });
+
+  // Pondération linéaire croissante, calculée UNIQUEMENT depuis le premier jour
+  // de vente connu (pas depuis le début de la fenêtre de 30 jours) : un produit
+  // vendu seulement depuis 5 jours ne doit pas être pénalisé par 25 jours
+  // "silencieux" antérieurs à sa première vente enregistrée.
+  let weightedSum=0, weightTotal=0;
+  for(let i=earliestDayIndex;i<windowDays;i++){
+    const weight=(i-earliestDayIndex)+1;
+    weightedSum+=dailyQty[i]*weight;
+    weightTotal+=weight;
+  }
+  return weightTotal>0 ? weightedSum/weightTotal : 0;
+}
+
+/**
+ * Calcule la prévision de rupture de stock pour un produit donné.
+ *
+ * @param {number} currentStock - quantité actuellement en stock
+ * @param {Array<{date:string, qty:number}>} salesHistory - historique des ventes
+ * @returns {{
+ *   daysLeft: number|null,      // jours restants estimés (null si non calculable)
+ *   dailyRate: number,          // vitesse de vente quotidienne moyenne
+ *   status: 'critical'|'warning'|'safe'|'no-data'|'no-sales',
+ *   label: string,              // texte prêt à afficher
+ *   color: string                // couleur hex associée au statut
+ * }}
+ */
+function predictStockoutForProduct(currentStock,salesHistory){
+  const nonZeroDays=(salesHistory||[]).filter(e=>Number(e.qty)>0).length;
+
+  if(nonZeroDays<FORECAST_MIN_DATA_POINTS){
+    return{daysLeft:null,dailyRate:0,status:'no-data',label:'Historique insuffisant',color:'#7a7a6e'};
+  }
+
+  const dailyRate=computeWeightedDailyRate(salesHistory);
+
+  if(dailyRate<=0){
+    return{daysLeft:null,dailyRate:0,status:'no-sales',label:'Aucune vente récente',color:'#7a7a6e'};
+  }
+
+  const daysLeft=currentStock/dailyRate;
+
+  if(daysLeft<=FORECAST_CRITICAL_DAYS){
+    return{daysLeft,dailyRate,status:'critical',label:'Épuisé dans '+Math.max(Math.ceil(daysLeft),0)+' j',color:'#c0392b'};
+  }
+  if(daysLeft<=FORECAST_WARNING_DAYS){
+    return{daysLeft,dailyRate,status:'warning',label:'Épuisé dans '+Math.ceil(daysLeft)+' j',color:'#d4a017'};
+  }
+  return{daysLeft,dailyRate,status:'safe',label:'Stock sécurisé ('+Math.round(daysLeft)+'+ j)',color:'#2d6a4f'};
+}
+
+// Charge l'historique des sorties (ventes) des 30 derniers jours pour TOUS les
+// produits de l'entreprise en une seule requête, et le regroupe par produit_id.
+// Mis en cache pendant la session ; rafraîchi via forceReload si besoin.
+async function loadSalesHistory(forceReload=false){
+  const now=Date.now();
+  if(!forceReload && SALES_HISTORY_LOADED_AT && (now-SALES_HISTORY_LOADED_AT)<5*60*1000){
+    return SALES_HISTORY_CACHE; // cache valable 5 minutes, évite de spammer Supabase
+  }
+  try{
+    const since=new Date();
+    since.setDate(since.getDate()-FORECAST_WINDOW_DAYS);
+    since.setHours(0,0,0,0);
+    const{data,error}=await sb.from('mouvements')
+      .select('produit_id,qty,date')
+      .eq('company_id',COMPANY_ID)
+      .eq('type','sortie')
+      .gte('date',since.toISOString().split('T')[0]);
+    if(error){ console.error('loadSalesHistory error',error); return SALES_HISTORY_CACHE; }
+
+    const grouped={};
+    (data||[]).forEach(m=>{
+      if(!grouped[m.produit_id]) grouped[m.produit_id]=[];
+      grouped[m.produit_id].push({date:m.date,qty:m.qty});
+    });
+    SALES_HISTORY_CACHE=grouped;
+    SALES_HISTORY_LOADED_AT=now;
+    return grouped;
+  }catch(e){
+    console.error('loadSalesHistory network error',e);
+    return SALES_HISTORY_CACHE;
+  }
+}
+
+// ============================================================
+// PARTAGE WHATSAPP — messages pré-remplis à partir des données réelles
+// ============================================================
+// Ouvre WhatsApp (app mobile si dispo, sinon WhatsApp Web) avec un
+// message déjà rédigé. Aucun serveur requis : wa.me se contente de
+// pré-remplir le champ de saisie, l'utilisateur choisit toujours le
+// destinataire et valide lui-même l'envoi.
+function openWhatsappWithMessage(text){
+  const url='https://wa.me/?text='+encodeURIComponent(text);
+  window.open(url,'_blank');
+}
+
+// Bouton "Partager sur WhatsApp" — résumé des produits à surveiller/en rupture,
+// avec leur prévision de rupture quand elle est disponible.
+async function shareStockAlertWhatsapp(){
+  if(!aiFeaturesUnlocked()){
+    showUpsellModal('ai');
+    return;
+  }
+  const watch=CACHE.produits.filter(p=>p.qty<=(p.seuil||5));
+  if(!watch.length){
+    toast('Aucun produit à signaler pour le moment.','warn');
+    return;
+  }
+  toast('Préparation du message...','warn');
+  const history=await loadSalesHistory();
+
+  let msg='🔔 *Alerte stock — GestiStock Pro*\n\n';
+  watch.forEach(p=>{
+    const forecast=predictStockoutForProduct(p.qty,history[p.id]||[]);
+    const icon=p.qty<=0?'🔴':'🟡';
+    msg+=icon+' *'+p.nom+'* — '+p.qty+' '+pluralizeUnite(p.unite,p.qty)+' restant(s)';
+    if(forecast.status==='critical'||forecast.status==='warning'){
+      msg+=' ⚠️ '+forecast.label;
+    }
+    msg+='\n';
+  });
+  msg+='\n_Envoyé depuis GestiStock Pro_';
+
+  openWhatsappWithMessage(msg);
+}
+
+// Bouton "Envoyer le rapport" (page Produits) — état complet du catalogue affiché,
+// avec leur statut et prévision.
+async function shareCatalogWhatsapp(){
+  if(!aiFeaturesUnlocked()){
+    showUpsellModal('ai');
+    return;
+  }
+  if(!CACHE.produits.length){
+    toast('Aucun produit dans le catalogue à partager.','warn');
+    return;
+  }
+  toast('Préparation du rapport...','warn');
+  const history=await loadSalesHistory();
+
+  let msg='📦 *Rapport de stock — GestiStock Pro*\n';
+  msg+='_'+new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})+'_\n\n';
+
+  CACHE.produits.forEach(p=>{
+    const st=getStatus(p);
+    const forecast=predictStockoutForProduct(p.qty,history[p.id]||[]);
+    const icon=st.k==='out'?'🔴':st.k==='low'?'🟡':'🟢';
+    msg+=icon+' *'+p.nom+'* : '+p.qty+' '+pluralizeUnite(p.unite,p.qty)+' — '+st.l;
+    if(forecast.status==='critical'||forecast.status==='warning'){
+      msg+=' (⚠️ '+forecast.label+')';
+    }
+    msg+='\n';
+  });
+  msg+='\n_Rapport généré automatiquement depuis GestiStock Pro_';
+
+  openWhatsappWithMessage(msg);
+}
+
+function getDN(id){const d=CACHE.depots.find(x=>x.id===id);return d?d.nom:'—';}
+function fmtD(iso){if(!iso)return'—';const d=new Date(iso);if(isNaN(d.getTime()))return'—';return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtN(n){return Number(n||0).toLocaleString('fr-FR');}
+function toast(msg,t='ok'){const el=document.createElement('div');el.className='toast t'+t;el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),3000);}
+function updateBadge(){const n=CACHE.produits.filter(p=>p.qty<=(p.seuil||5)).length;const b=document.getElementById('abadge');b.textContent=n;b.style.display=n>0?'inline':'none';}
+
+// ===== ALERTES STOCK FAIBLE (in-app) =====
+let STOCK_ALERT_SHOWN_FOR=null; // évite de réafficher la popup en boucle pour les mêmes produits
+function checkStockAlerts(){
+  const low=CACHE.produits.filter(p=>p.qty<=(p.seuil||5));
+  if(!low.length) return;
+  const signature=low.map(p=>p.id+':'+p.qty).sort().join(',');
+  if(signature===STOCK_ALERT_SHOWN_FOR) return; // déjà notifié pour cet état exact
+  STOCK_ALERT_SHOWN_FOR=signature;
+  const body=document.getElementById('stockAlertPopupBody');
+  body.innerHTML=low.slice(0,6).map(p=>{
+    const rupture=p.qty<=0;
+    return '<div style="padding:6px 0;border-bottom:1px solid #f5e4a1;display:flex;justify-content:space-between;gap:8px">'+
+      '<span>'+(rupture?'🔴':'🟡')+' '+p.nom+'</span>'+
+      '<b style="color:'+(rupture?'#c0392b':'#b7770d')+'">'+p.qty+'</b>'+
+    '</div>';
+  }).join('')+(low.length>6?'<div style="padding-top:6px;color:#7a7a6e">+ '+(low.length-6)+' autre(s) produit(s)...</div>':'');
+  document.getElementById('stockAlertPopup').style.display='block';
+}
+function closeStockAlertPopup(){document.getElementById('stockAlertPopup').style.display='none';}
+
+// ===== EXPORT EXCEL =====
+function downloadXlsx(rows,filename,sheetName){
+  if(!rows||!rows.length){toast('Aucune donnée à exporter.','warn');return;}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,sheetName||'Feuille1');
+  XLSX.writeFile(wb,filename);
+  toast('Export Excel généré !');
+}
+function exportProduits(){
+  const rows=CACHE.produits.map(p=>({
+    'Nom':p.nom,'Catégorie':p.categorie||'','Dépôt':getDN(p.depot_id),'Quantité':p.qty,
+    'Unité':p.unite||'','Seuil alerte':p.seuil||5,'Prix achat':p.prix_achat||0,'Prix vente':p.prix_vente||0,
+    'Fournisseur':p.fournisseur||'','SKU':p.sku||'','Statut':getStatus(p).l
+  }));
+  downloadXlsx(rows,'gestistock_produits_'+new Date().toISOString().split('T')[0]+'.xlsx','Produits');
+}
+function exportMouvements(){
+  const rows=CACHE.mouvements.map(m=>{
+    const p=CACHE.produits.find(x=>x.id===m.produit_id);
+    return{'Date':fmtD(m.date),'Type':m.type,'Produit':p?p.nom:'(supprimé)','Quantité':m.qty,'Motif':m.motif||'','Référence':m.ref||'','Par':m.user_name||''};
+  });
+  downloadXlsx(rows,'gestistock_mouvements_'+new Date().toISOString().split('T')[0]+'.xlsx','Mouvements');
+}
+function exportFactures(){
+  const rows=CACHE.factures.map(f=>({
+    'N°':String(f.id).slice(-4),'Client':f.client,'Téléphone':f.tel||'','Date':fmtD(f.date),
+    'Type':f.type,'Total':f.total||0,'Moyen paiement':f.paiement_mode||'','Montant reçu':f.montant_recu||0,
+    'Notes':f.notes||'','Par':f.user_name||''
+  }));
+  downloadXlsx(rows,'gestistock_factures_'+new Date().toISOString().split('T')[0]+'.xlsx','Factures');
+}
+function exportDepots(){
+  const rows=CACHE.depots.map(d=>({
+    'Nom':d.nom,'Adresse':d.adresse||'','Responsable':d.responsable||'',
+    'Nb produits':CACHE.produits.filter(p=>p.depot_id===d.id).length
+  }));
+  downloadXlsx(rows,'gestistock_depots_'+new Date().toISOString().split('T')[0]+'.xlsx','Dépôts');
+}
+function fillDS(){
+  const o=CACHE.depots.map(d=>'<option value="'+d.id+'">'+d.nom+'</option>').join('');
+  const pd=document.getElementById('pdepot');if(pd)pd.innerHTML=o;
+}
+
+function openOvl(id){document.getElementById(id).classList.add('op');}
+function closeOvl(id){document.getElementById(id).classList.remove('op');}
+document.querySelectorAll('.ovl').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('op');}));
+
+// ===== SYSTEME DE CONFIRMATION GENERIQUE =====
+let CONFIRM_CB=null;
+function askConfirm(title, text, onYes){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmText').textContent=text;
+  CONFIRM_CB=onYes;
+  document.getElementById('confirmOvl').classList.add('op');
+}
+function closeConfirm(){
+  document.getElementById('confirmOvl').classList.remove('op');
+  CONFIRM_CB=null;
+}
+function confirmYes(){
+  const cb=CONFIRM_CB;
+  closeConfirm();
+  if(cb) cb();
+}
+
+function renderDash(){
+  const p=CACHE.produits;
+  const ok=p.filter(x=>x.qty>(x.seuil||5)).length;
+  const low=p.filter(x=>x.qty>0&&x.qty<=(x.seuil||5)).length;
+  const out=p.filter(x=>x.qty<=0).length;
+  const val=p.reduce((s,x)=>s+x.qty*(x.prix_achat||0),0);
+  document.getElementById('d-ok').textContent=ok;
+  document.getElementById('d-oks').textContent='sur '+p.length+' produit'+(p.length>1?'s':'');
+  document.getElementById('d-low').textContent=low;
+  document.getElementById('d-out').textContent=out;
+  document.getElementById('d-val').textContent=fmtN(val);
+  document.getElementById('d-totprod').textContent=p.length;
+  document.getElementById('d-totmvt').textContent=CACHE.mouvements.length;
+  document.getElementById('d-ruptureN').textContent=out;
+  try{
+    const lastLogin=CU&&CU.last_sign_in_at?fmtD(CU.last_sign_in_at):'Première visite';
+    document.getElementById('d-lastlogin').textContent=lastLogin;
+  }catch(e){document.getElementById('d-lastlogin').textContent='—';}
+  const watch=p.filter(x=>x.qty<=(x.seuil||5));
+  document.getElementById('watchlist').innerHTML=watch.length?watch.map(x=>{const st=getStatus(x);return'<div style="padding:11px 16px;border-top:1px solid #e8e5de;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font-weight:600">'+x.nom+'</div><div style="font-size:11px;color:#7a7a6e">'+getDN(x.depot_id)+'</div></div><span class="badge" style="background:'+st.c+'22;color:'+st.c+'">'+st.l+'</span><div>Qte: <b>'+x.qty+'</b></div></div>';}).join(''):'<div class="empty">✅ Tout est en ordre !</div>';
+  renderSalesChart();
+}
+
+// ===== GRAPHIQUE D'ÉVOLUTION DES VENTES (7 / 30 jours) =====
+let SALES_RANGE=7;
+function setSalesRange(days){
+  SALES_RANGE=days;
+  document.getElementById('salesRange7').className='btn '+(days===7?'bp':'bs')+' bxs';
+  document.getElementById('salesRange30').className='btn '+(days===30?'bp':'bs')+' bxs';
+  renderSalesChart();
+}
+function renderSalesChart(){
+  const box=document.getElementById('salesChartBox');
+  if(!box) return;
+
+  const days=SALES_RANGE;
+  const today=new Date();
+  today.setHours(0,0,0,0);
+
+  // Construit la liste des N derniers jours (du plus ancien au plus récent)
+  const labels=[];
+  const totals=[];
+  for(let i=days-1;i>=0;i--){
+    const d=new Date(today);
+    d.setDate(d.getDate()-i);
+    labels.push(d);
+    totals.push(0);
+  }
+
+  // Additionne le total des factures par jour
+  CACHE.factures.forEach(f=>{
+    if(!f.date) return;
+    const fd=new Date(f.date);
+    fd.setHours(0,0,0,0);
+    for(let i=0;i<labels.length;i++){
+      if(fd.getTime()===labels[i].getTime()){
+        totals[i]+=(f.total||0);
+        break;
+      }
+    }
+  });
+
+  const total=totals.reduce((a,b)=>a+b,0);
+  if(total===0){
+    box.innerHTML='<div class="empty">Aucune vente enregistrée sur les '+days+' derniers jours.</div>';
+    return;
+  }
+
+  // Rendu SVG simple (barres), sans dépendance externe
+  const w=Math.max(labels.length*(days===7?60:20),300);
+  const h=160;
+  const padBottom=24;
+  const max=Math.max(...totals,1);
+  const barW=days===7?36:Math.max(w/labels.length-4,3);
+  const gap=days===7?18:4;
+
+  let bars='';
+  let xPos=8;
+  for(let i=0;i<totals.length;i++){
+    const barH=Math.round((totals[i]/max)*(h-padBottom-10));
+    const y=h-padBottom-barH;
+    const dateStr=labels[i].toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    bars+='<g>'+
+      '<rect x="'+xPos+'" y="'+y+'" width="'+barW+'" height="'+Math.max(barH,totals[i]>0?2:0)+'" rx="3" fill="'+(totals[i]>0?'#2d6a4f':'#e8e5de')+'"></rect>'+
+      (days===7?'<text x="'+(xPos+barW/2)+'" y="'+(h-6)+'" font-size="9" fill="#7a7a6e" text-anchor="middle">'+dateStr+'</text>':'')+
+      '<title>'+dateStr+' : '+fmtN(totals[i])+' FCFA</title>'+
+    '</g>';
+    xPos+=barW+gap;
+  }
+  const svgWidth=xPos;
+
+  box.innerHTML=
+    '<div style="font-size:12px;color:#7a7a6e;margin-bottom:8px">Total sur '+days+' jours : <b style="color:#2d6a4f;font-size:14px">'+fmtN(total)+' FCFA</b></div>'+
+    '<div style="overflow-x:auto"><svg width="'+svgWidth+'" height="'+h+'" style="min-width:100%">'+bars+'</svg></div>'+
+    (days===30?'<div style="font-size:10px;color:#7a7a6e;margin-top:4px">Survolez une barre pour voir le détail du jour.</div>':'');
+}
+
+async function renderProds(search=''){
+  let p=CACHE.produits;
+  if(search && search.trim()){
+    const s=search.trim().toLowerCase();
+    p=p.filter(x=>
+      x.nom.toLowerCase().includes(s) ||
+      (x.categorie||'').toLowerCase().includes(s) ||
+      (x.fournisseur||'').toLowerCase().includes(s) ||
+      (x.sku||'').toLowerCase().includes(s)
+    );
+  }
+  const iv=PROFILE&&PROFILE.role==='viewer';
+  if(!p.length){
+    document.getElementById('ptbody').innerHTML='<tr><td colspan="9"><div class="empty">'+(search?'Aucun produit ne correspond à "'+search+'".':'Aucun produit. Cliquez sur + Produit pour commencer.')+'</div></td></tr>';
+    return;
+  }
+
+  // Affichage immédiat sans prévision (évite un écran vide pendant le chargement),
+  // puis on complète la colonne Prévision dès que l'historique est prêt.
+  document.getElementById('ptbody').innerHTML=p.map(x=>renderProdRow(x,iv,null)).join('');
+
+  const history=await loadSalesHistory();
+  document.getElementById('ptbody').innerHTML=p.map(x=>{
+    const forecast=predictStockoutForProduct(x.qty,history[x.id]||[]);
+    return renderProdRow(x,iv,forecast);
+  }).join('');
+}
+
+function renderProdRow(x,iv,forecast){
+  const st=getStatus(x);
+  const img=x.image_url?'<img src="'+x.image_url+'" style="width:32px;height:32px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle" onerror="this.style.display=\'none\'">':'';
+  let forecastBadge;
+  if(!aiFeaturesUnlocked()){
+    forecastBadge=lockedFeatureBadge('Activer l\'IA');
+  } else {
+    forecastBadge=forecast
+      ? '<span class="badge" style="background:'+forecast.color+'22;color:'+forecast.color+'" title="Vitesse de vente estimée : '+forecast.dailyRate.toFixed(1)+'/jour sur 30 jours">'+forecast.label+'</span>'
+      : '<span class="badge" style="background:#7a7a6e22;color:#7a7a6e">Calcul...</span>';
+  }
+  return '<tr><td>'+img+'<b>'+x.nom+'</b>'+(x.sku?'<br><small style="color:#7a7a6e">SKU: '+x.sku+'</small>':'')+(x.fournisseur?'<br><small style="color:#7a7a6e">'+x.fournisseur+'</small>':'')+'</td><td>'+(x.categorie||'—')+'</td><td>'+getDN(x.depot_id)+'</td><td><b>'+x.qty+'</b> '+pluralizeUnite(x.unite,x.qty)+'</td><td>'+(x.seuil||5)+'</td><td>'+(x.prix_vente?fmtN(x.prix_vente)+' F':'—')+'</td><td><span class="badge" style="background:'+st.c+'22;color:'+st.c+'">'+st.l+'</span></td><td>'+forecastBadge+'</td><td>'+(iv?'—':'<div style="display:flex;gap:4px"><button class="btn bs bxs" onclick="openProdModal('+x.id+')">✏️</button><button class="btn bd bxs" onclick="askDelProd('+x.id+')">🗑</button></div>')+'</td></tr>';
+}
+// Liste des unités prédéfinies (doit correspondre exactement aux <option> du select #punite)
+const PRESET_UNITES=['pièce','kg','litre','sac','carton','boule','bouteille','paquet','sachet','bidon'];
+
+// Affiche/masque le champ texte libre selon que "Autre" est sélectionné dans la liste
+function toggleCustomUnite(){
+  const sel=document.getElementById('punite').value;
+  const customInput=document.getElementById('puniteCustom');
+  customInput.style.display = (sel==='__custom__') ? 'block' : 'none';
+  if(sel==='__custom__') customInput.focus();
+}
+
+// Remplit intelligemment le champ unité : si la valeur existante correspond à une unité
+// prédéfinie, sélectionne-la dans la liste ; sinon bascule en mode "Autre" avec le texte original.
+function setUniteFieldValue(value){
+  const sel=document.getElementById('punite');
+  const customInput=document.getElementById('puniteCustom');
+  const normalized=(value||'').trim().toLowerCase();
+  if(!normalized){
+    sel.value='pièce';
+    customInput.style.display='none';
+    customInput.value='';
+    return;
+  }
+  if(PRESET_UNITES.includes(normalized)){
+    sel.value=normalized;
+    customInput.style.display='none';
+    customInput.value='';
+  } else {
+    sel.value='__custom__';
+    customInput.style.display='block';
+    customInput.value=value;
+  }
+}
+
+// Récupère la valeur finale à enregistrer (liste prédéfinie OU texte personnalisé)
+function getUniteFieldValue(){
+  const sel=document.getElementById('punite').value;
+  if(sel==='__custom__'){
+    return document.getElementById('puniteCustom').value.trim();
+  }
+  return sel;
+}
+
+function openProdModal(id){
+  EPId=id||null;
+
+  // Blocage : limite du nombre de produits selon l'abonnement (uniquement à la création)
+  if(!EPId && SUB && typeof SUB.limite_produits==='number' && CACHE.produits.length>=SUB.limite_produits){
+    toast('🚨 Limite atteinte : votre plan '+(PLAN_LABELS[SUB.plan]||SUB.plan)+' est limité à '+SUB.limite_produits+' produits. Passez à un plan supérieur pour continuer.','err');
+    openSubModal();
+    return;
+  }
+
+  document.getElementById('prodMT').textContent=EPId?'Modifier produit':'Ajouter un produit';
+  fillDS();
+  if(EPId){
+    const p=CACHE.produits.find(x=>x.id===EPId);
+    if(!p){toast('Produit introuvable. Il a peut-être été supprimé.','err');closeOvl('prodOvl');return;}
+    document.getElementById('pnom').value=p.nom;
+    document.getElementById('pcat').value=p.categorie||'Autre';
+    setUniteFieldValue(p.unite||'');
+    document.getElementById('pqty').value=p.qty;
+    document.getElementById('pseuil').value=p.seuil||5;
+    document.getElementById('ppa').value=p.prix_achat||'';
+    document.getElementById('ppv').value=p.prix_vente||'';
+    document.getElementById('pfourn').value=p.fournisseur||'';
+    document.getElementById('pdepot').value=p.depot_id||CACHE.depots[0]?.id;
+    document.getElementById('psku').value=p.sku||'';
+    document.getElementById('pbarcode').value=p.barcode||'';
+    document.getElementById('pimage').value=p.image_url||'';
+  } else {
+    ['pnom','pfourn','psku','pimage','pbarcode'].forEach(i=>document.getElementById(i).value='');
+    ['pqty','ppa','ppv'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('pseuil').value=5;
+    document.getElementById('pcat').value='Alimentation';
+    setUniteFieldValue('pièce');
+    document.getElementById('pdepot').value=CACHE.depots[0]?.id||'';
+  }
+  openOvl('prodOvl');
+}
+async function saveProd(){
+  const nom=document.getElementById('pnom').value.trim();
+  if(!nom){toast('Le nom du produit est obligatoire.','err');return;}
+  if(!CACHE.depots.length){toast('Créez d\'abord un dépôt avant d\'ajouter un produit.','err');return;}
+
+  // Double vérification de la limite de produits au moment de l'enregistrement
+  if(!EPId && SUB && typeof SUB.limite_produits==='number' && CACHE.produits.length>=SUB.limite_produits){
+    toast('🚨 Limite de '+SUB.limite_produits+' produits atteinte pour votre plan.','err');
+    return;
+  }
+
+  const btn=event.target;
+  if(btn.disabled) return;
+  const origText=btn.textContent;
+  setBtnLoading(btn,true,'Enregistrement...',origText);
+  const d={
+    nom,categorie:document.getElementById('pcat').value,unite:getUniteFieldValue(),
+    qty:parseInt(document.getElementById('pqty').value)||0,seuil:parseInt(document.getElementById('pseuil').value)||5,
+    prix_achat:parseFloat(document.getElementById('ppa').value)||0,prix_vente:parseFloat(document.getElementById('ppv').value)||0,
+    fournisseur:document.getElementById('pfourn').value,depot_id:parseInt(document.getElementById('pdepot').value)||CACHE.depots[0]?.id,
+    sku:document.getElementById('psku').value,image_url:document.getElementById('pimage').value,
+    barcode:document.getElementById('pbarcode').value||null,
+    company_id:COMPANY_ID
+  };
+  try{
+    let error;
+    if(EPId){({error}=await sb.from('produits').update(d).eq('id',EPId));}
+    else{({error}=await sb.from('produits').insert(d));}
+    setBtnLoading(btn,false,'',origText);
+    if(error){toast('Erreur lors de l\'enregistrement: '+error.message,'err');return;}
+    closeOvl('prodOvl');
+    await loadAllData();
+    renderProds();renderDash();
+    toast(EPId?'Produit modifié avec succès !':'Produit ajouté avec succès !');
+  }catch(e){
+    setBtnLoading(btn,false,'',origText);
+    toast('Erreur réseau. Vérifiez votre connexion.','err');
+  }
+}
+function askDelProd(id){
+  const p=CACHE.produits.find(x=>x.id===id);
+  askConfirm('Supprimer ce produit ?', 'Vous êtes sur le point de supprimer "'+(p?p.nom:'ce produit')+'". Cette action est irréversible.', ()=>delProd(id));
+}
+async function delProd(id){
+  try{
+    const{error}=await sb.from('produits').delete().eq('id',id);
+    if(error){toast('Erreur lors de la suppression: '+error.message,'err');return;}
+    await loadAllData();renderProds();renderDash();toast('Produit supprimé.','warn');
+  }catch(e){
+    toast('Erreur réseau. Réessayez.','err');
+  }
+}
+
+function fillMvtSelect(){document.getElementById('mvtprod').innerHTML='<option value="">Choisir un produit...</option>'+CACHE.produits.map(x=>'<option value="'+x.id+'">'+x.nom+' ('+x.qty+' '+pluralizeUnite(x.unite,x.qty)+')</option>').join('');}
+function updMvtInfo(){const id=parseInt(document.getElementById('mvtprod').value);const p=CACHE.produits.find(x=>x.id===id);document.getElementById('mvtinfo').textContent=p?'Stock actuel: '+p.qty+' '+pluralizeUnite(p.unite,p.qty):'';}
+function setMvt(t){MT=t;document.getElementById('mbin').className='btn '+(t==='entree'?'bp':'bs');document.getElementById('mbout').className='btn '+(t==='sortie'?'bd':'bs');}
+async function saveMvt(){
+  const pid=parseInt(document.getElementById('mvtprod').value);
+  const qty=parseInt(document.getElementById('mvtqty').value);
+  const motif=document.getElementById('mvtmotif').value;
+  const ref=document.getElementById('mvtref').value;
+  const date=document.getElementById('mvtdate').value||new Date().toISOString().split('T')[0];
+  const msg=document.getElementById('mvtmsg');
+  msg.style.color='#c0392b';
+  if(PROFILE.role==='vendeur' && MT==='entree'){msg.textContent='Votre rôle ne permet pas d\'enregistrer des entrées de stock.';return;}
+  if(!CACHE.produits.length){msg.textContent='Aucun produit disponible. Ajoutez d\'abord un produit.';return;}
+  if(!pid){msg.textContent='Veuillez choisir un produit.';return;}
+  if(!qty||qty<=0){msg.textContent='Veuillez indiquer une quantité valide (supérieure à 0).';return;}
+  const btn=event.target;
+  if(btn.disabled) return;
+  const p=CACHE.produits.find(x=>x.id===pid);
+  if(!p){msg.textContent='Ce produit n\'existe plus. Rechargez la page.';return;}
+  if(MT==='sortie'&&p.qty<qty){msg.textContent='Stock insuffisant (disponible : '+p.qty+').';return;}
+  setBtnLoading(btn,true,'Enregistrement...','Enregistrer');
+
+  const newQty=MT==='entree'?p.qty+qty:p.qty-qty;
+
+  // ---- Mode hors ligne : on met à jour l'affichage local et on met en file d'attente ----
+  if(!navigator.onLine){
+    p.qty=newQty; // mise à jour optimiste du cache local pour un affichage cohérent immédiat
+    await queueOfflineMouvement({produit_id:pid,type:MT,qty,motif,ref,date,depot_id:p.depot_id,user_name:PROFILE.nom,company_id:COMPANY_ID});
+    await saveOfflineCache();
+    setBtnLoading(btn,false,'','Enregistrer');
+    msg.style.color='#b7770d';
+    msg.textContent='';
+    document.getElementById('mvtqty').value='';
+    document.getElementById('mvtref').value='';
+    document.getElementById('mvtmotif').value='';
+    fillMvtSelect();renderMvts();renderDash();
+    await updatePendingBadges();
+    toast('📡 Hors ligne : mouvement enregistré localement, sera synchronisé au retour du réseau.','warn');
+    return;
+  }
+
+  try{
+    const{error:e1}=await sb.from('produits').update({qty:newQty}).eq('id',pid);
+    if(e1){msg.textContent='Erreur lors de la mise à jour du stock.';setBtnLoading(btn,false,'','Enregistrer');return;}
+    const{error:e2}=await sb.from('mouvements').insert({produit_id:pid,type:MT,qty,motif,ref,date,depot_id:p.depot_id,user_name:PROFILE.nom,company_id:COMPANY_ID});
+    setBtnLoading(btn,false,'','Enregistrer');
+    if(e2){msg.textContent='Le stock a été mis à jour mais l\'historique n\'a pas pu être enregistré.';console.error(e2);return;}
+    msg.textContent='';
+    document.getElementById('mvtqty').value='';
+    document.getElementById('mvtref').value='';
+    document.getElementById('mvtmotif').value='';
+    await loadAllData();
+    fillMvtSelect();renderMvts();renderDash();
+    toast('Mouvement enregistré avec succès !');
+  }catch(e){
+    // Le réseau a coupé au moment précis de l'envoi : on bascule en file d'attente
+    // plutôt que de faire perdre la saisie à l'utilisateur.
+    p.qty=newQty;
+    await queueOfflineMouvement({produit_id:pid,type:MT,qty,motif,ref,date,depot_id:p.depot_id,user_name:PROFILE.nom,company_id:COMPANY_ID});
+    await saveOfflineCache();
+    setBtnLoading(btn,false,'','Enregistrer');
+    msg.style.color='#b7770d';
+    msg.textContent='';
+    fillMvtSelect();renderMvts();renderDash();
+    await updatePendingBadges();
+    toast('📡 Connexion perdue : mouvement mis en attente de synchronisation.','warn');
+  }
+}
+function renderMvts(search=''){
+  let m=CACHE.mouvements;
+  if(search && search.trim()){
+    const s=search.trim().toLowerCase();
+    m=m.filter(x=>{
+      const p=CACHE.produits.find(y=>y.id===x.produit_id);
+      return (p&&p.nom.toLowerCase().includes(s)) ||
+        (x.motif||'').toLowerCase().includes(s) ||
+        (x.ref||'').toLowerCase().includes(s) ||
+        (x.user_name||'').toLowerCase().includes(s);
+    });
+  }
+  if(!m.length){
+    document.getElementById('mvtbody').innerHTML='<tr><td colspan="7"><div class="empty">'+(search?'Aucun mouvement ne correspond à "'+search+'".':'Aucun mouvement enregistré pour le moment.')+'</div></td></tr>';
+    return;
+  }
+  const ic={entree:'⬆',sortie:'⬇'};
+  const cl={entree:'#2d6a4f',sortie:'#c0392b'};
+  document.getElementById('mvtbody').innerHTML=m.map(x=>{const p=CACHE.produits.find(y=>y.id===x.produit_id);return'<tr><td>'+fmtD(x.date)+'</td><td style="color:'+cl[x.type]+';font-weight:700">'+ic[x.type]+' '+x.type+'</td><td>'+(p?p.nom:'<i>Produit supprimé</i>')+'</td><td><b>'+x.qty+'</b></td><td>'+(x.motif||'—')+'</td><td>'+(x.ref||'—')+'</td><td>'+(x.user_name||'—')+'</td></tr>';}).join('');
+}
+
+function openFactModal(id){
+  EFId=id||null;FL=[];
+  document.getElementById('factMT').textContent=EFId?'Modifier facture':'Nouvelle facture';
+  if(EFId){
+    const f=CACHE.factures.find(x=>x.id===EFId);
+    if(!f){toast('Facture introuvable.','err');closeOvl('factOvl');return;}
+    document.getElementById('fclient').value=f.client;
+    document.getElementById('fdate').value=f.date;
+    document.getElementById('ftel').value=f.tel||'';
+    document.getElementById('ftype').value=f.type;
+    document.getElementById('fnotes').value=f.notes||'';
+    document.getElementById('fpaymode').value=f.paiement_mode||'Espèces';
+    document.getElementById('fmontantrecu').value=f.montant_recu||'';
+    FL=[...(f.lines||[])];
+  } else {
+    ['fclient','ftel','fnotes'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('fdate').value=new Date().toISOString().split('T')[0];
+    document.getElementById('fpaymode').value='Espèces';
+    document.getElementById('fmontantrecu').value='';
+    FL=[{prodId:'',desc:'',qty:1,pu:0}];
+  }
+  renderFL();openOvl('factOvl');
+}
+function addFL(){FL.push({prodId:'',desc:'',qty:1,pu:0});renderFL();}
+function renderFL(){
+  document.getElementById('flines').innerHTML=FL.map((l,i)=>'<div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;margin-bottom:6px;align-items:end"><div><select class="fs" style="font-size:12px;margin-bottom:3px" onchange="flP('+i+',this.value)"><option value="">Manuel...</option>'+CACHE.produits.map(p=>'<option value="'+p.id+'"'+(l.prodId==p.id?' selected':'')+'>'+p.nom+'</option>').join('')+'</select><input class="fi" style="font-size:12px" value="'+(l.desc||'')+'" placeholder="Description" oninput="flD('+i+',this.value)"></div><div><div style="font-size:10px;color:#7a7a6e;margin-bottom:2px">Qte</div><input type="number" class="fi" style="font-size:12px" value="'+l.qty+'" min="1" oninput="flQ('+i+',this.value)"></div><div><div style="font-size:10px;color:#7a7a6e;margin-bottom:2px">Prix FCFA</div><input type="number" class="fi" style="font-size:12px" value="'+l.pu+'" min="0" oninput="flPU('+i+',this.value)"></div><button class="btn bd bxs" onclick="flX('+i+')">✕</button></div>').join('');
+  updFT();
+}
+function flP(i,v){const p=CACHE.produits.find(x=>x.id==v);FL[i].prodId=v;if(p){FL[i].desc=p.nom;FL[i].pu=p.prix_vente||0;}renderFL();}
+function flD(i,v){FL[i].desc=v;}
+function flQ(i,v){FL[i].qty=parseInt(v)||1;updFT();}
+function flPU(i,v){FL[i].pu=parseFloat(v)||0;updFT();}
+function flX(i){FL.splice(i,1);renderFL();}
+function updFT(){
+  const t=FL.reduce((s,l)=>s+l.qty*l.pu,0);
+  document.getElementById('ftotal').textContent=fmtN(t)+' FCFA';
+  const recu=parseFloat(document.getElementById('fmontantrecu').value)||0;
+  const monnaie=recu-t;
+  const elMonnaie=document.getElementById('fmonnaie');
+  if(elMonnaie){
+    elMonnaie.textContent=fmtN(Math.max(monnaie,0))+' FCFA'+(monnaie<0?' (manque '+fmtN(Math.abs(monnaie))+' FCFA)':'');
+    elMonnaie.style.color=monnaie<0?'#c0392b':'#1a1a1a';
+  }
+}
+
+async function saveFactBtn(){
+  const btn = event.target;
+  await saveFact(btn);
+}
+
+async function saveFact(btn){
+  const client=document.getElementById('fclient').value.trim();
+  if(!client){toast('Le nom du client est obligatoire.','err');return;}
+  if(!FL.length || FL.every(l=>!l.desc)){toast('Ajoutez au moins une ligne avec une description.','err');return;}
+
+  // Blocage : limite du nombre de factures (basée sur limite_factures_pdf uniquement pour l'impression,
+  // mais on garde une limite raisonnable de création de factures selon le plan gratuit)
+  if(SUB && (SUB.plan==='beta'||SUB.plan==='free') && CACHE.factures.length>=30 && !EFId){
+    toast('🚨 Limite atteinte ! Le plan Gratuit est limité à 30 factures. Passez au plan Pro pour un accès illimité.', 'err');
+    return;
+  }
+
+  if(btn && btn.disabled) return;
+  const origText=btn ? btn.textContent : 'Enregistrer';
+  if(btn) setBtnLoading(btn,true,'Enregistrement...',origText);
+
+  const f={
+    client,date:document.getElementById('fdate').value,tel:document.getElementById('ftel').value,
+    type:document.getElementById('ftype').value,notes:document.getElementById('fnotes').value,
+    lines:FL,total:FL.reduce((s,l)=>s+l.qty*l.pu,0),user_name:PROFILE.nom,company_id:COMPANY_ID,
+    paiement_mode:document.getElementById('fpaymode').value,
+    montant_recu:parseFloat(document.getElementById('fmontantrecu').value)||0
+  };
+  try{
+    let error;
+    if(EFId){({error}=await sb.from('factures').update(f).eq('id',EFId));}
+    else{({error}=await sb.from('factures').insert(f));}
+    if(btn) setBtnLoading(btn,false,'',origText);
+    if(error){toast('Erreur lors de l\'enregistrement: '+error.message,'err');return;}
+    closeOvl('factOvl');
+    await loadAllData();renderFacts();
+    toast('Facture enregistrée avec succès !');
+  }catch(e){
+    if(btn) setBtnLoading(btn,false,'',origText);
+    toast('Erreur réseau. Vérifiez votre connexion.','err');
+  }
+}
+function renderFacts(){
+  if(!CACHE.factures.length){
+    document.getElementById('factbody').innerHTML='<tr><td colspan="6"><div class="empty">Aucune facture pour le moment.</div></td></tr>';
+    return;
+  }
+  const tl={facture:'Facture',bon:'Bon commande',devis:'Devis'};
+  document.getElementById('factbody').innerHTML=CACHE.factures.map(f=>'<tr><td><b>#'+String(f.id).slice(-4)+'</b></td><td>'+f.client+'</td><td>'+fmtD(f.date)+'</td><td><b>'+fmtN(f.total)+' FCFA</b></td><td>'+(tl[f.type]||f.type)+'</td><td><div style="display:flex;gap:4px"><button class="btn bs bxs" onclick="previewFact('+f.id+')">👁️</button><button class="btn bs bxs" onclick="openFactModal('+f.id+')">✏️</button><button class="btn bd bxs" onclick="askDelFact('+f.id+')">🗑</button></div></td></tr>').join('');
+}
+function askDelFact(id){
+  const f=CACHE.factures.find(x=>x.id===id);
+  askConfirm('Supprimer cette facture ?', 'La facture de "'+(f?f.client:'ce client')+'" sera définitivement supprimée.', ()=>delFact(id));
+}
+
+// Gère le clic sur le bouton d'impression/PDF dans l'aperçu de facture.
+// Si le plan ne permet pas l'export PDF (limite_factures_pdf === false),
+// on affiche un message d'incitation au lieu d'imprimer.
+function handlePrintClick(){
+  if(SUB && SUB.limite_factures_pdf===false){
+    toast('🔒 L\'export PDF des factures est réservé aux plans Pro et Premium. Passez à un plan supérieur pour l\'activer.','warn');
+    openSubModal();
+    return;
+  }
+  window.print();
+}
+
+async function previewFact(id){
+  const f=CACHE.factures.find(x=>x.id===id);
+  if(!f){toast('Facture introuvable.','err');return;}
+  let ent={nom:'Mon entreprise',logo_url:'',telephone:'',adresse:'',email:'',devise:'FCFA'};
+  try{
+    const{data}=await sb.from('companies').select('*').eq('id',COMPANY_ID).single();
+    if(data) ent=data;
+  }catch(e){}
+
+  const currentPlan=SUB?SUB.plan:'beta';
+  const logoAllowed=currentPlan==='pro'||currentPlan==='premium';
+
+  const tl={facture:'FACTURE',bon:'BON DE COMMANDE',devis:'DEVIS'};
+
+  let logoHtml = '<div style="font-size:22px;font-weight:800;color:#2d6a4f">'+ent.nom+'</div>';
+  if(logoAllowed && ent.logo_url && ent.logo_url.trim() !== '') {
+    logoHtml = '<img src="'+ent.logo_url+'" style="max-height:60px;max-width:160px;object-fit:contain" onerror="this.style.display=\'none\'">';
+  }
+
+  const lignesHtml=(f.lines||[]).map(l=>'<tr><td style="padding:8px;border-bottom:1px solid #e8e5de">'+(l.desc||'—')+'</td><td style="padding:8px;border-bottom:1px solid #e8e5de;text-align:center">'+l.qty+'</td><td style="padding:8px;border-bottom:1px solid #e8e5de;text-align:right">'+fmtN(l.pu)+'</td><td style="padding:8px;border-bottom:1px solid #e8e5de;text-align:right">'+fmtN(l.qty*l.pu)+'</td></tr>').join('');
+
+  const paiementHtml = '<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:#4a4a4a">'+
+      '<div>Moyen de paiement : <b>'+(f.paiement_mode||'—')+'</b></div>'+
+      (f.montant_recu?('<div>Reçu : <b>'+fmtN(f.montant_recu)+'</b> · Rendu : <b>'+fmtN(Math.max((f.montant_recu||0)-(f.total||0),0))+'</b></div>'):'')+
+    '</div>';
+
+  // Met à jour l'état du bouton d'impression selon le plan
+  const btnPrint=document.getElementById('btnPrintPdf');
+  if(btnPrint){
+    if(SUB && SUB.limite_factures_pdf===false){
+      btnPrint.innerHTML='🔒 Passer au plan Pro/Premium';
+    } else {
+      btnPrint.innerHTML='🖨️ Imprimer / Enregistrer en PDF';
+    }
+  }
+
+  document.getElementById('previewContent').innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;border-bottom:2px solid #2d6a4f;padding-bottom:16px">'+
+      '<div>'+logoHtml+
+        '<div style="font-size:11px;color:#7a7a6e;margin-top:6px">'+(ent.adresse||'')+(ent.telephone?' · '+ent.telephone:'')+(ent.email?' · '+ent.email:'')+'</div>'+
+      '</div>'+
+      '<div style="text-align:right"><div style="font-size:20px;font-weight:800;color:#2d6a4f">'+(tl[f.type]||'FACTURE')+'</div><div style="font-size:11px;color:#7a7a6e">N° #'+String(f.id).slice(-4)+' · '+fmtD(f.date)+'</div></div>'+
+    '</div>'+
+    '<div style="margin-bottom:16px"><b>Client :</b> '+f.client+(f.tel?' · '+f.tel:'')+'</div>'+
+    '<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f5f4f0"><th style="padding:8px;text-align:left;font-size:11px">Description</th><th style="padding:8px;font-size:11px">Qté</th><th style="padding:8px;text-align:right;font-size:11px">Prix</th><th style="padding:8px;text-align:right;font-size:11px">Total</th></tr></thead><tbody>'+lignesHtml+'</tbody></table>'+
+    '<div style="text-align:right;margin-top:16px;font-size:16px;font-weight:800;color:#2d6a4f">TOTAL : '+fmtN(f.total)+' '+(ent.devise||'FCFA')+'</div>'+
+    paiementHtml+
+    (f.notes?'<div style="margin-top:16px;padding:12px;background:#f5f4f0;border-radius:6px;font-size:11px;color:#7a7a6e">'+f.notes+'</div>':'')+
+    '<div style="margin-top:20px;text-align:center;font-size:10px;color:#b7c4bb">☁️ Données sauvegardées automatiquement — GestiStock Pro</div>';
+  openOvl('previewOvl');
+}
+async function delFact(id){
+  try{
+    const{error}=await sb.from('factures').delete().eq('id',id);
+    if(error){toast('Erreur lors de la suppression: '+error.message,'err');return;}
+    await loadAllData();renderFacts();toast('Facture supprimée.','warn');
+  }catch(e){
+    toast('Erreur réseau. Réessayez.','err');
+  }
+}
+
+function renderAlertes(){
+  const a=CACHE.produits.filter(p=>p.qty<=(p.seuil||5));
+  document.getElementById('alertlist').innerHTML=a.length?a.map(p=>{const st=getStatus(p);return'<div style="padding:12px 16px;border-top:1px solid #e8e5de;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font-weight:600">'+p.nom+'</div><div style="font-size:11px;color:#7a7a6e">'+getDN(p.depot_id)+'</div></div><span class="badge" style="background:'+st.c+'22;color:'+st.c+'">'+st.l+'</span><div>'+p.qty+' / '+(p.seuil||5)+'</div></div>';}).join(''):'<div class="empty">✅ Aucune alerte ! Tout est en ordre.</div>';
+}
+
+// ============================================================
+// MODULE CRÉDITS CLIENTS — Ventes à crédit et remboursements
+// ============================================================
+let EDebtId=null; // dette en cours de remboursement (modale paiement)
+
+function getClientName(clientId){
+  const c=CACHE.clients.find(x=>x.id===clientId);
+  return c?c.nom:'Client supprimé';
+}
+function getDebtStatus(d){
+  const remaining=(d.amount_due||0)-(d.amount_paid||0);
+  if(remaining<=0) return{l:'Soldée',c:'#2d6a4f'};
+  if((d.amount_paid||0)>0) return{l:'Partiel',c:'#d4a017'};
+  return{l:'Ouverte',c:'#c0392b'};
+}
+
+// Met à jour le badge rouge dans la navigation (nombre de dettes non soldées)
+function updateCreditBadge(){
+  const n=CACHE.debts.filter(d=>((d.amount_due||0)-(d.amount_paid||0))>0).length;
+  const b=document.getElementById('creditbadge');
+  if(!b) return;
+  b.textContent=n;
+  b.style.display=n>0?'inline':'none';
+}
+
+function fillClientSelect(){
+  const sel=document.getElementById('debtClientSelect');
+  const opts=CACHE.clients.map(c=>'<option value="'+c.id+'">'+c.nom+(c.telephone?' — '+c.telephone:'')+'</option>').join('');
+  sel.innerHTML='<option value="">Choisir un client existant...</option>'+opts+'<option value="__new__">+ Créer un nouveau client</option>';
+}
+function toggleNewClientFields(){
+  const sel=document.getElementById('debtClientSelect').value;
+  document.getElementById('newClientFields').style.display = (sel==='__new__') ? 'block' : 'none';
+}
+
+function openDebtModal(){
+  fillClientSelect();
+  document.getElementById('debtClientSelect').value='';
+  document.getElementById('newClientFields').style.display='none';
+  ['newClientNom','newClientTel','newClientAdresse','debtDesc','debtAmount','debtDeposit'].forEach(i=>document.getElementById(i).value='');
+  openOvl('debtOvl');
+}
+
+async function saveDebt(){
+  const clientSel=document.getElementById('debtClientSelect').value;
+  const desc=document.getElementById('debtDesc').value.trim();
+  const amount=parseFloat(document.getElementById('debtAmount').value);
+  const deposit=parseFloat(document.getElementById('debtDeposit').value)||0;
+
+  if(!clientSel){toast('Veuillez choisir ou créer un client.','err');return;}
+  if(!amount||amount<=0){toast('Veuillez indiquer un montant total dû valide.','err');return;}
+  if(deposit>amount){toast('L\'acompte ne peut pas dépasser le montant total dû.','err');return;}
+
+  const btn=event.target;
+  if(btn.disabled) return;
+  const origText=btn.textContent;
+  setBtnLoading(btn,true,'Enregistrement...',origText);
+
+  try{
+    let clientId=clientSel;
+
+    // Création rapide d'un nouveau client si demandé
+    if(clientSel==='__new__'){
+      const nom=document.getElementById('newClientNom').value.trim();
+      if(!nom){
+        setBtnLoading(btn,false,'',origText);
+        toast('Le nom du client est obligatoire.','err');
+        return;
+      }
+      const{data:newClient,error:clientErr}=await sb.from('clients').insert({
+        nom,
+        telephone:document.getElementById('newClientTel').value.trim(),
+        adresse:document.getElementById('newClientAdresse').value.trim(),
+        company_id:COMPANY_ID
+      }).select().single();
+      if(clientErr){
+        setBtnLoading(btn,false,'',origText);
+        toast('Erreur lors de la création du client: '+clientErr.message,'err');
+        return;
+      }
+      clientId=newClient.id;
+    }
+
+    const{error:debtErr}=await sb.from('debts').insert({
+      client_id:clientId,
+      description:desc,
+      amount_due:amount,
+      amount_paid:deposit,
+      status: deposit>=amount ? 'soldee' : (deposit>0 ? 'partiellement_payee' : 'ouverte'),
+      user_name:PROFILE.nom,
+      company_id:COMPANY_ID
+    });
+    setBtnLoading(btn,false,'',origText);
+    if(debtErr){
+      toast('Erreur lors de l\'enregistrement: '+debtErr.message,'err');
+      return;
+    }
+    closeOvl('debtOvl');
+    await loadAllData();
+    renderCredits();
+    toast('Vente à crédit enregistrée !');
+  }catch(e){
+    setBtnLoading(btn,false,'',origText);
+    toast('Erreur réseau. Vérifiez votre connexion.','err');
+  }
+}
+
+function openPaymentModal(debtId){
+  EDebtId=debtId;
+  const d=CACHE.debts.find(x=>x.id===debtId);
+  if(!d){toast('Dette introuvable.','err');return;}
+  const remaining=(d.amount_due||0)-(d.amount_paid||0);
+  document.getElementById('paymentDebtInfo').innerHTML=
+    '<b>'+getClientName(d.client_id)+'</b><br>Solde restant : <b style="color:#c0392b">'+fmtN(remaining)+' FCFA</b>';
+  document.getElementById('paymentAmount').value='';
+  document.getElementById('paymentAmount').max=remaining;
+  openOvl('paymentOvl');
+}
+
+async function saveDebtPayment(){
+  const d=CACHE.debts.find(x=>x.id===EDebtId);
+  if(!d){toast('Dette introuvable.','err');return;}
+  const remaining=(d.amount_due||0)-(d.amount_paid||0);
+  const amount=parseFloat(document.getElementById('paymentAmount').value);
+
+  if(!amount||amount<=0){toast('Veuillez indiquer un montant valide.','err');return;}
+  if(amount>remaining){toast('Le montant dépasse le solde restant ('+fmtN(remaining)+' FCFA).','err');return;}
+
+  const btn=event.target;
+  if(btn.disabled) return;
+  const origText=btn.textContent;
+  setBtnLoading(btn,true,'Enregistrement...',origText);
+
+  try{
+    const{error:payErr}=await sb.from('debt_payments').insert({
+      debt_id:d.id,amount,user_name:PROFILE.nom,company_id:COMPANY_ID
+    });
+    if(payErr){
+      setBtnLoading(btn,false,'',origText);
+      toast('Erreur lors de l\'enregistrement du remboursement: '+payErr.message,'err');
+      return;
+    }
+
+    const newPaid=(d.amount_paid||0)+amount;
+    const newStatus = newPaid>=d.amount_due ? 'soldee' : 'partiellement_payee';
+    const{error:updErr}=await sb.from('debts').update({amount_paid:newPaid,status:newStatus}).eq('id',d.id);
+    setBtnLoading(btn,false,'',origText);
+    if(updErr){
+      toast('Remboursement enregistré mais mise à jour du solde échouée.','err');
+      return;
+    }
+    closeOvl('paymentOvl');
+    await loadAllData();
+    renderCredits();
+    toast('Remboursement de '+fmtN(amount)+' FCFA enregistré !');
+  }catch(e){
+    setBtnLoading(btn,false,'',origText);
+    toast('Erreur réseau. Réessayez.','err');
+  }
+}
+
+function renderCredits(search=''){
+  let debts=CACHE.debts;
+  if(search && search.trim()){
+    const s=search.trim().toLowerCase();
+    debts=debts.filter(d=>getClientName(d.client_id).toLowerCase().includes(s) || (d.description||'').toLowerCase().includes(s));
+  }
+
+  const totalDue=CACHE.debts.reduce((sum,d)=>sum+Math.max((d.amount_due||0)-(d.amount_paid||0),0),0);
+  const nbOuvertes=CACHE.debts.filter(d=>((d.amount_due||0)-(d.amount_paid||0))>0).length;
+  document.getElementById('cr-totaldue').textContent=fmtN(totalDue);
+  document.getElementById('cr-nbouvertes').textContent=nbOuvertes;
+
+  if(!debts.length){
+    document.getElementById('creditbody').innerHTML='<tr><td colspan="7"><div class="empty">'+(search?'Aucun résultat pour "'+search+'".':'Aucune vente à crédit enregistrée.')+'</div></td></tr>';
+    return;
+  }
+
+  document.getElementById('creditbody').innerHTML=debts.map(d=>{
+    const st=getDebtStatus(d);
+    const remaining=Math.max((d.amount_due||0)-(d.amount_paid||0),0);
+    const canPay=remaining>0;
+    return '<tr><td><b>'+getClientName(d.client_id)+'</b></td><td>'+(d.description||'—')+'</td>'+
+      '<td>'+fmtN(d.amount_due)+' F</td><td>'+fmtN(d.amount_paid)+' F</td>'+
+      '<td><b style="color:'+(remaining>0?'#c0392b':'#2d6a4f')+'">'+fmtN(remaining)+' F</b></td>'+
+      '<td><span class="badge" style="background:'+st.c+'22;color:'+st.c+'">'+st.l+'</span></td>'+
+      '<td>'+(canPay?'<button class="btn bp bxs" onclick="openPaymentModal('+d.id+')">💵 Rembourser</button>':'—')+'</td></tr>';
+  }).join('');
+}
+
+// ============================================================
+// RAPPORTS — Bilan consolidé sur une période, avec export PDF
+// ============================================================
+
+// Filtre une liste d'objets datés selon la période sélectionnée dans le sélecteur
+function filterByPeriode(items, dateField){
+  const periode=document.getElementById('rapportPeriode')?document.getElementById('rapportPeriode').value:'30';
+  if(periode==='all') return items;
+  const days=parseInt(periode);
+  const since=new Date();
+  since.setDate(since.getDate()-days);
+  since.setHours(0,0,0,0);
+  return items.filter(item=>{
+    const d=new Date(item[dateField]);
+    return !isNaN(d.getTime()) && d>=since;
+  });
+}
+
+// Calcule le bilan consolidé pour la période sélectionnée
+function computeRapportData(){
+  const facturesPeriode=filterByPeriode(CACHE.factures,'date');
+  const mouvementsPeriode=filterByPeriode(CACHE.mouvements,'date');
+
+  const chiffreAffaires=facturesPeriode.reduce((sum,f)=>sum+(f.total||0),0);
+  const nbTransactions=facturesPeriode.length;
+  const nbEntrees=mouvementsPeriode.filter(m=>m.type==='entree').length;
+  const nbSorties=mouvementsPeriode.filter(m=>m.type==='sortie').length;
+  const valeurStock=CACHE.produits.reduce((sum,p)=>sum+(p.qty*(p.prix_achat||0)),0);
+  const totalCreditsDus=CACHE.debts.reduce((sum,d)=>sum+Math.max((d.amount_due||0)-(d.amount_paid||0),0),0);
+
+  return{
+    facturesPeriode,mouvementsPeriode,
+    chiffreAffaires,nbTransactions,nbEntrees,nbSorties,
+    valeurStock,totalCreditsDus,
+    periodeLabel:document.getElementById('rapportPeriode').selectedOptions[0].textContent
+  };
+}
+
+function renderRapport(){
+  const box=document.getElementById('rapportContent');
+  const r=computeRapportData();
+  box.innerHTML=
+    '<div class="sg" style="margin-bottom:0">'+
+      '<div class="sc g"><div class="sl">Chiffre d\'affaires</div><div class="sv g" style="font-size:20px">'+fmtN(r.chiffreAffaires)+'</div><div class="ss">FCFA · '+r.periodeLabel+'</div></div>'+
+      '<div class="sc b"><div class="sl">Transactions</div><div class="sv b" style="font-size:20px">'+r.nbTransactions+'</div><div class="ss">factures émises</div></div>'+
+      '<div class="sc y"><div class="sl">Mouvements stock</div><div class="sv y" style="font-size:20px">'+(r.nbEntrees+r.nbSorties)+'</div><div class="ss">'+r.nbEntrees+' entrées · '+r.nbSorties+' sorties</div></div>'+
+      '<div class="sc r"><div class="sl">Crédits en cours</div><div class="sv r" style="font-size:20px">'+fmtN(r.totalCreditsDus)+'</div><div class="ss">FCFA à recouvrer</div></div>'+
+    '</div>'+
+    '<div class="sc b" style="margin-top:12px"><div class="sl">Valeur totale du stock actuel</div><div class="sv b" style="font-size:22px">'+fmtN(r.valeurStock)+'</div><div class="ss">FCFA (au prix d\'achat)</div></div>';
+}
+
+// ---- Utilitaires communs à tous les exports PDF ----
+function newBrandedPDF(title){
+  const doc=new jspdf.jsPDF();
+  doc.setFontSize(16);
+  doc.setTextColor(45,106,79); // vert GestiStock Pro
+  doc.text('GestiStock Pro',14,16);
+  doc.setFontSize(11);
+  doc.setTextColor(120,120,110);
+  doc.text(title,14,23);
+  doc.text(new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}),14,29);
+  doc.setDrawColor(45,106,79);
+  doc.line(14,32,196,32);
+  return doc;
+}
+function downloadPDF(doc,filename){
+  doc.save(filename);
+  toast('Export PDF généré !');
+}
+
+function exportProduitsPDF(){
+  if(!CACHE.produits.length){toast('Aucun produit à exporter.','warn');return;}
+  const doc=newBrandedPDF('Catalogue produits');
+  doc.autoTable({
+    startY:38,
+    head:[['Nom','Catégorie','Dépôt','Quantité','Seuil','Prix vente','Statut']],
+    body:CACHE.produits.map(p=>{
+      const st=getStatus(p);
+      return[p.nom,p.categorie||'—',getDN(p.depot_id),p.qty+' '+pluralizeUnite(p.unite,p.qty),p.seuil||5,p.prix_vente?fmtN(p.prix_vente)+' F':'—',st.l];
+    }),
+    headStyles:{fillColor:[45,106,79]},
+    styles:{fontSize:9}
+  });
+  downloadPDF(doc,'gestistock_produits_'+new Date().toISOString().split('T')[0]+'.pdf');
+}
+
+function exportMouvementsPDF(){
+  if(!CACHE.mouvements.length){toast('Aucun mouvement à exporter.','warn');return;}
+  const doc=newBrandedPDF('Historique des mouvements');
+  doc.autoTable({
+    startY:38,
+    head:[['Date','Type','Produit','Qté','Motif','Par']],
+    body:CACHE.mouvements.map(m=>{
+      const p=CACHE.produits.find(x=>x.id===m.produit_id);
+      return[fmtD(m.date),m.type==='entree'?'Entrée':'Sortie',p?p.nom:'(supprimé)',m.qty,m.motif||'—',m.user_name||'—'];
+    }),
+    headStyles:{fillColor:[45,106,79]},
+    styles:{fontSize:9}
+  });
+  downloadPDF(doc,'gestistock_mouvements_'+new Date().toISOString().split('T')[0]+'.pdf');
+}
+
+function exportFacturesPDF(){
+  if(!CACHE.factures.length){toast('Aucune facture à exporter.','warn');return;}
+  const doc=newBrandedPDF('Récapitulatif des factures');
+  doc.autoTable({
+    startY:38,
+    head:[['N°','Client','Date','Total','Type','Paiement']],
+    body:CACHE.factures.map(f=>['#'+String(f.id).slice(-4),f.client,fmtD(f.date),fmtN(f.total)+' F',f.type,f.paiement_mode||'—']),
+    headStyles:{fillColor:[45,106,79]},
+    styles:{fontSize:9}
+  });
+  const total=CACHE.factures.reduce((s,f)=>s+(f.total||0),0);
+  doc.setFontSize(11);
+  doc.setTextColor(45,106,79);
+  doc.text('Total : '+fmtN(total)+' FCFA',14,doc.lastAutoTable.finalY+10);
+  downloadPDF(doc,'gestistock_factures_'+new Date().toISOString().split('T')[0]+'.pdf');
+}
+
+function exportCreditsPDF(){
+  if(!CACHE.debts.length){toast('Aucun crédit à exporter.','warn');return;}
+  const doc=newBrandedPDF('Crédits clients');
+  doc.autoTable({
+    startY:38,
+    head:[['Client','Description','Dû','Payé','Solde','Statut']],
+    body:CACHE.debts.map(d=>{
+      const st=getDebtStatus(d);
+      const remaining=Math.max((d.amount_due||0)-(d.amount_paid||0),0);
+      return[getClientName(d.client_id),d.description||'—',fmtN(d.amount_due)+' F',fmtN(d.amount_paid)+' F',fmtN(remaining)+' F',st.l];
+    }),
+    headStyles:{fillColor:[45,106,79]},
+    styles:{fontSize:9}
+  });
+  const totalDue=CACHE.debts.reduce((sum,d)=>sum+Math.max((d.amount_due||0)-(d.amount_paid||0),0),0);
+  doc.setFontSize(11);
+  doc.setTextColor(192,57,43);
+  doc.text('Total dû : '+fmtN(totalDue)+' FCFA',14,doc.lastAutoTable.finalY+10);
+  downloadPDF(doc,'gestistock_credits_'+new Date().toISOString().split('T')[0]+'.pdf');
+}
+
+function exportRapportPDF(){
+  const r=computeRapportData();
+  const doc=newBrandedPDF('Rapport — '+r.periodeLabel);
+
+  doc.autoTable({
+    startY:38,
+    head:[['Indicateur','Valeur']],
+    body:[
+      ['Chiffre d\'affaires',fmtN(r.chiffreAffaires)+' FCFA'],
+      ['Nombre de transactions',String(r.nbTransactions)],
+      ['Entrées de stock',String(r.nbEntrees)],
+      ['Sorties de stock',String(r.nbSorties)],
+      ['Valeur totale du stock actuel',fmtN(r.valeurStock)+' FCFA'],
+      ['Crédits clients en cours',fmtN(r.totalCreditsDus)+' FCFA'],
+    ],
+    headStyles:{fillColor:[45,106,79]},
+    styles:{fontSize:10}
+  });
+
+  if(r.facturesPeriode.length){
+    doc.setFontSize(12);
+    doc.setTextColor(45,106,79);
+    doc.text('Détail des ventes de la période',14,doc.lastAutoTable.finalY+12);
+    doc.autoTable({
+      startY:doc.lastAutoTable.finalY+16,
+      head:[['Date','Client','Total']],
+      body:r.facturesPeriode.map(f=>[fmtD(f.date),f.client,fmtN(f.total)+' F']),
+      headStyles:{fillColor:[45,106,79]},
+      styles:{fontSize:9}
+    });
+  }
+
+  downloadPDF(doc,'gestistock_rapport_'+new Date().toISOString().split('T')[0]+'.pdf');
+}
+
+function openDepotModal(id){
+  EDId=id||null;
+
+  // Blocage : limite du nombre de dépôts selon l'abonnement (uniquement à la création)
+  if(!EDId && SUB && typeof SUB.max_depots==='number' && CACHE.depots.length>=SUB.max_depots){
+    toast('🚨 Limite atteinte : votre plan '+(PLAN_LABELS[SUB.plan]||SUB.plan)+' est limité à '+SUB.max_depots+' dépôt'+(SUB.max_depots>1?'s':'')+'. Passez à un plan supérieur.','err');
+    openSubModal();
+    return;
+  }
+
+  document.getElementById('depotMT').textContent=EDId?'Modifier dépôt':'Nouveau dépôt';
+  if(EDId){
+    const d=CACHE.depots.find(x=>x.id===EDId);
+    if(!d){toast('Dépôt introuvable.','err');closeOvl('depotOvl');return;}
+    document.getElementById('dnom').value=d.nom;
+    document.getElementById('daddr').value=d.adresse||'';
+    document.getElementById('dresp').value=d.responsable||'';
+  } else {
+    ['dnom','daddr','dresp'].forEach(i=>document.getElementById(i).value='');
+  }
+  openOvl('depotOvl');
+}
+async function saveDepot(){
+  // Double vérification de la limite de dépôts au moment de l'enregistrement
+  if(!EDId && SUB && typeof SUB.max_depots==='number' && CACHE.depots.length>=SUB.max_depots){
+    toast('🚨 Limite de '+SUB.max_depots+' dépôt'+(SUB.max_depots>1?'s':'')+' atteinte pour votre plan.','err');
+    return;
+  }
+
+  const nom=document.getElementById('dnom').value.trim();
+  if(!nom){toast('Le nom du dépôt est obligatoire.','err');return;}
+  const btn=event.target;
+  if(btn.disabled) return;
+  const origText=btn.textContent;
+  setBtnLoading(btn,true,'Enregistrement...',origText);
+  const d={nom,adresse:document.getElementById('daddr').value,responsable:document.getElementById('dresp').value,company_id:COMPANY_ID};
+  try{
+    let error;
+    if(EDId){({error}=await sb.from('depots').update(d).eq('id',EDId));}
+    else{({error}=await sb.from('depots').insert(d));}
+    setBtnLoading(btn,false,'',origText);
+    if(error){toast('Erreur lors de l\'enregistrement: '+error.message,'err');return;}
+    closeOvl('depotOvl');
+    await loadAllData();renderDepots();
+    toast(EDId?'Dépôt modifié avec succès !':'Dépôt créé avec succès !');
+  }catch(e){
+    setBtnLoading(btn,false,'',origText);
+    toast('Erreur réseau. Vérifiez votre connexion.','err');
+  }
+}
+function renderDepots(){
+  if(!CACHE.depots.length){
+    document.getElementById('dbody').innerHTML='<tr><td colspan="5"><div class="empty">Aucun dépôt. Cliquez sur + Nouveau dépôt.</div></td></tr>';
+    return;
+  }
+  document.getElementById('dbody').innerHTML=CACHE.depots.map(d=>{
+    const n=CACHE.produits.filter(p=>p.depot_id===d.id).length;
+    return'<tr><td><b>'+d.nom+'</b></td><td>'+(d.adresse||'—')+'</td><td>'+(d.responsable||'—')+'</td><td>'+n+'</td><td><div style="display:flex;gap:4px"><button class="btn bs bxs" onclick="openDepotModal('+d.id+')">✏️</button><button class="btn bd bxs" onclick="askDelDepot('+d.id+')">🗑</button></div></td></tr>';
+  }).join('');
+}
+function askDelDepot(id){
+  const d=CACHE.depots.find(x=>x.id===id);
+  const n=CACHE.produits.filter(p=>p.depot_id===id).length;
+  if(n>0){toast('Impossible : ce dépôt contient '+n+' produit'+(n>1?'s':'')+'. Déplacez-les avant de supprimer.','err');return;}
+  askConfirm('Supprimer ce dépôt ?', 'Le dépôt "'+(d?d.nom:'')+'" sera définitivement supprimé.', ()=>delDepot(id));
+}
+async function delDepot(id){
+  try{
+    const{error}=await sb.from('depots').delete().eq('id',id);
+    if(error){toast('Erreur lors de la suppression: '+error.message,'err');return;}
+    await loadAllData();renderDepots();toast('Dépôt supprimé.','warn');
+  }catch(e){
+    toast('Erreur réseau. Réessayez.','err');
+  }
+}
+
+async function renderUsers(){
+  try{
+    const{data,error}=await sb.from('profiles').select('*').eq('company_id',COMPANY_ID).order('created_at');
+    if(error){document.getElementById('ubody').innerHTML='<tr><td colspan="4"><div class="empty">Erreur de chargement de l\'équipe.</div></td></tr>';return;}
+    if(!data||!data.length){document.getElementById('ubody').innerHTML='<tr><td colspan="4"><div class="empty">Aucun membre dans l\'équipe.</div></td></tr>';return;}
+    const isAdmin=PROFILE&&PROFILE.role==='admin';
+    document.getElementById('ubody').innerHTML=data.map(u=>{
+      const isSelf=u.id===CU.id;
+      let actionsHtml='—';
+      if(isAdmin){
+        const options=Object.keys(ROLE_OPTIONS).map(r=>'<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+ROLE_OPTIONS[r]+'</option>').join('');
+        actionsHtml='<select class="fs" style="font-size:12px;padding:5px 8px" onchange="changeUserRole(\''+u.id+'\',this.value,this)" '+(isSelf?'disabled title="Vous ne pouvez pas modifier votre propre rôle"':'')+'>'+options+'</select>';
+      }
+      return '<tr><td><b>'+u.nom+'</b>'+(isSelf?' <small style="color:#7a7a6e">(vous)</small>':'')+'</td><td>'+(ROLE_OPTIONS[u.role]||u.role)+'</td><td>'+fmtD(u.created_at)+'</td><td>'+actionsHtml+'</td></tr>';
+    }).join('');
+  }catch(e){
+    document.getElementById('ubody').innerHTML='<tr><td colspan="4"><div class="empty">Erreur réseau.</div></td></tr>';
+  }
+}
+
+async function changeUserRole(userId,newRole,selectEl){
+  if(!PROFILE||PROFILE.role!=='admin'){toast('Seul un administrateur peut modifier les rôles.','err');return;}
+  const original=selectEl.value;
+  selectEl.disabled=true;
+  try{
+    const{error}=await sb.from('profiles').update({role:newRole}).eq('id',userId);
+    selectEl.disabled=false;
+    if(error){toast('Erreur lors du changement de rôle: '+error.message,'err');selectEl.value=original;return;}
+    toast('Rôle mis à jour : '+(ROLE_OPTIONS[newRole]||newRole));
+  }catch(e){
+    selectEl.disabled=false;
+    toast('Erreur réseau. Réessayez.','err');
+  }
+}
+
+// Affiche l'historique des connexions de l'équipe (table 'connexions'), réservé aux admins
+async function renderConnexions(){
+  const panel=document.getElementById('connexionsPanel');
+  if(!panel) return;
+  if(!PROFILE||PROFILE.role!=='admin'){panel.style.display='none';return;}
+  panel.style.display='';
+  try{
+    const{data,error}=await sb.from('connexions').select('*').eq('company_id',COMPANY_ID).order('created_at',{ascending:false}).limit(100);
+    if(error){
+      document.getElementById('cxbody').innerHTML='<tr><td colspan="3"><div class="empty">Historique indisponible pour le moment.</div></td></tr>';
+      return;
+    }
+    if(!data||!data.length){
+      document.getElementById('cxbody').innerHTML='<tr><td colspan="3"><div class="empty">Aucune connexion enregistrée pour le moment.</div></td></tr>';
+      return;
+    }
+    document.getElementById('cxbody').innerHTML=data.map(c=>{
+      const d=new Date(c.created_at);
+      const heure=isNaN(d.getTime())?'—':d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      return '<tr><td><b>'+(c.user_name||'—')+'</b></td><td>'+fmtD(c.created_at)+'</td><td>'+heure+'</td></tr>';
+    }).join('');
+  }catch(e){
+    document.getElementById('cxbody').innerHTML='<tr><td colspan="3"><div class="empty">Erreur réseau.</div></td></tr>';
+  }
+}
+
+// ===== PARAMETRES (Mon profil + onglets) =====
+function switchPtab(tab){
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.toggle('on',b.dataset.pt===tab));
+  document.querySelectorAll('.psec').forEach(s=>s.classList.toggle('on',s.id==='psec-'+tab));
+  if(tab==='entreprise') loadEntreprise();
+  if(tab==='abonnement') loadAbonnementTab();
+}
+function renderProfil(){
+  document.getElementById('profNom').value=PROFILE.nom||'';
+  document.getElementById('profEmail').value=CU.email||'';
+  const rl={admin:'Administrateur',gerant:'Gérant',vendeur:'Vendeur',viewer:'Lecteur'};
+  document.getElementById('profRole').value=rl[PROFILE.role]||PROFILE.role;
+  document.getElementById('profilMsg').textContent='';
+  document.getElementById('pwdMsg').textContent='';
+  document.getElementById('newPwd').value='';
+  document.getElementById('newPwd2').value='';
+  const planTag=document.getElementById('planTag');
+  if(planTag && SUB) planTag.textContent=PLAN_LABELS[SUB.plan]||SUB.plan;
+  switchPtab('mon-profil');
+}
+async function loadEntreprise(){
+  const box=document.getElementById('entMsg');
+  try{
+    const{data,error}=await sb.from('companies').select('*').eq('id',COMPANY_ID).single();
+    if(error||!data){box.style.color='#c0392b';box.textContent='Erreur de chargement.';return;}
+    document.getElementById('entNom').value=data.nom||'';
+    document.getElementById('entTel').value=data.telephone||'';
+    document.getElementById('entEmail').value=data.email||'';
+    document.getElementById('entAdresse').value=data.adresse||'';
+    document.getElementById('entDevise').value=data.devise||'FCFA';
+    document.getElementById('entFuseau').value=data.fuseau_horaire||'Africa/Porto-Novo';
+    document.getElementById('entLogo').value=data.logo_url||'';
+
+    const currentPlan=SUB?SUB.plan:'beta';
+    const logoAllowed=currentPlan==='pro'||currentPlan==='premium';
+    const caseLogo = document.getElementById('entLogo');
+    const lockNote = document.getElementById('logoLockNote');
+    if(!logoAllowed) {
+      caseLogo.disabled = true;
+      caseLogo.style.background = '#f5f4f0';
+      caseLogo.placeholder = "🔒 Option réservée aux membres Pro et Premium";
+      if(lockNote) lockNote.style.display='block';
+    } else {
+      caseLogo.disabled = false;
+      caseLogo.style.background = '#fff';
+      caseLogo.placeholder = "https://...";
+      if(lockNote) lockNote.style.display='none';
+    }
+  }catch(e){box.style.color='#c0392b';box.textContent='Erreur réseau.';}
+}
+async function saveEntreprise(){
+  const msg=document.getElementById('entMsg');
+  msg.style.color='#c0392b';
+  const nom=document.getElementById('entNom').value.trim();
+  if(!nom){msg.textContent='Le nom de l\'entreprise est obligatoire.';return;}
+  const btn=event.target;
+  if(btn.disabled) return;
+  const origText=btn.textContent;
+  setBtnLoading(btn,true,'Enregistrement...',origText);
+  const d={
+    nom,telephone:document.getElementById('entTel').value,email:document.getElementById('entEmail').value,
+    adresse:document.getElementById('entAdresse').value,devise:document.getElementById('entDevise').value,
+    fuseau_horaire:document.getElementById('entFuseau').value,logo_url:document.getElementById('entLogo').value
+  };
+  try{
+    const{error}=await sb.from('companies').update(d).eq('id',COMPANY_ID);
+    setBtnLoading(btn,false,'',origText);
+    if(error){msg.textContent='Erreur: '+error.message;return;}
+    msg.style.color='#2d6a4f';
+    msg.textContent='Informations enregistrées avec succès !';
+    toast('Entreprise mise à jour !');
+  }catch(e){
+    setBtnLoading(btn,false,'',origText);
+    msg.textContent='Erreur réseau. Vérifiez votre connexion.';
+  }
+}
+
+// Affiche l'onglet "Abonnement" des paramètres à partir de SUB (déjà chargé au login)
+async function loadAbonnementTab(){
+  const box=document.getElementById('abonnementContent');
+  box.innerHTML='<div class="loading">Chargement...</div>';
+  try{
+    if(!SUB) await loadAbonnement();
+
+    const plan=SUB.plan||'beta';
+    const planLabel=PLAN_LABELS[plan]||plan.toUpperCase();
+    const maxUsers=SUB.max_utilisateurs||2;
+    const maxDepots=SUB.max_depots||1;
+    const limiteProduits=SUB.limite_produits||50;
+    const pdfOk=SUB.limite_factures_pdf===true;
+
+    const nbUsers=(await sb.from('profiles').select('id',{count:'exact',head:true}).eq('company_id',COMPANY_ID)).count||0;
+    const nbDepots=CACHE.depots.length;
+    const nbProduits=CACHE.produits.length;
+
+    const strUsers = plan==='premium' ? nbUsers + ' / Illimité' : nbUsers + ' / ' + maxUsers;
+    const strDepots = plan==='premium' ? nbDepots + ' / Illimité' : nbDepots + ' / ' + maxDepots;
+    const strProduits = nbProduits + ' / ' + limiteProduits;
+
+    let bannerHtml='';
+    if((plan==='beta'||plan==='free') && SUB.joursRestants!==null){
+      if(SUB.essaiTermine){
+        bannerHtml='<div class="betaBanner over" style="margin-bottom:14px">⏰ Période bêta terminée.</div>';
+      } else {
+        bannerHtml='<div class="betaBanner active" style="margin-bottom:14px">🎁 Il vous reste <b>'+SUB.joursRestants+' jours</b> d\'essai gratuit.</div>';
+      }
+    }
+
+    box.innerHTML=
+      bannerHtml+
+      '<div class="fl2" style="margin-bottom:14px">'+
+        '<div class="sc g" style="margin:0"><div class="sl">Plan actuel</div><div class="sv g" style="font-size:18px">'+planLabel+'</div></div>'+
+        '<div class="sc b" style="margin:0"><div class="sl">Début</div><div class="sv b" style="font-size:18px">'+fmtD(SUB.starts_at)+'</div></div>'+
+      '</div>'+
+      '<div class="fl2" style="margin-bottom:14px">'+
+        '<div class="sc y" style="margin:0"><div class="sl">Utilisateurs</div><div class="sv y" style="font-size:18px">'+strUsers+'</div></div>'+
+        '<div class="sc r" style="margin:0"><div class="sl">Dépôts</div><div class="sv r" style="font-size:18px">'+strDepots+'</div></div>'+
+      '</div>'+
+      '<div class="fl2" style="margin-bottom:14px">'+
+        '<div class="sc b" style="margin:0"><div class="sl">Produits</div><div class="sv b" style="font-size:18px">'+strProduits+'</div></div>'+
+        '<div class="sc '+(pdfOk?'g':'y')+'" style="margin:0"><div class="sl">Factures PDF</div><div class="sv '+(pdfOk?'g':'y')+'" style="font-size:14px">'+(pdfOk?'✅ Activé':'🔒 Verrouillé')+'</div></div>'+
+      '</div>'+
+      '<button class="btn bp" style="width:100%;justify-content:center;padding:12px;font-size:13px" onclick="openSubModal()">Passer à une offre supérieure</button>'+
+      ((plan==='pro'||plan==='premium')
+        ? '<button class="btn bs" style="width:100%;justify-content:center;padding:12px;font-size:13px;margin-top:8px;color:#c0392b" onclick="askCancelSubscription()">Résilier mon abonnement</button>'
+        : '');
+  }catch(e){
+    box.innerHTML='<div class="empty">Erreur réseau lors du chargement.</div>';
+  }
+}
+
+// Demande confirmation avant résiliation, puis repasse l'entreprise en plan Gratuit.
+// La résiliation prend effet immédiatement (choix simple et transparent pour l'utilisateur),
+// sans logique de "fin de période déjà payée" qui demanderait un vrai suivi de facturation.
+function askCancelSubscription(){
+  askConfirm(
+    'Résilier votre abonnement ?',
+    'Vous repasserez immédiatement au plan Gratuit et perdrez l\'accès aux fonctionnalités Pro/Premium (scanner illimité, prévisions IA, partage WhatsApp). Cette action est réversible : vous pourrez vous réabonner à tout moment.',
+    confirmCancelSubscription
+  );
+}
+async function confirmCancelSubscription(){
+  try{
+    const{error}=await sb.from('abonnements').update({
+      plan:'beta',
+      status:'active',
+      max_utilisateurs:2,
+      max_depots:1,
+      limite_produits:50,
+      limite_factures_pdf:false
+    }).eq('company_id',COMPANY_ID);
+    if(error){
+      toast('Erreur lors de la résiliation: '+error.message,'err');
+      return;
+    }
+    await loadAbonnement();
+    updateScanQuotaDisplay();
+    updateWhatsappButtonsLockState();
+    await loadAbonnementTab();
+    toast('Abonnement résilié. Vous êtes maintenant en plan Gratuit.','warn');
+  }catch(e){
+    toast('Erreur réseau. Réessayez.','err');
+  }
+}
+async function saveProfil(){
+  const nom=document.getElementById('profNom').value.trim();
+  const msg=document.getElementById('profilMsg');
+  msg.style.color='#c0392b';
+  if(!nom){msg.textContent='Le nom ne peut pas etre vide.';return;}
+  const btn=event.target;
+  if(btn.disabled) return;
+  const origText=btn.textContent;
+  setBtnLoading(btn,true,'Enregistrement...',origText);
+  try{
+    const{error}=await sb.from('profiles').update({nom}).eq('id',CU.id);
+    setBtnLoading(btn,false,'',origText);
+    if(error){msg.textContent='Erreur lors de la mise à jour: '+error.message;return;}
+    PROFILE.nom=nom;
+    document.getElementById('uname').textContent=nom;
+    msg.style.color='#2d6a4f';
+    msg.textContent='Profil mis à jour avec succès !';
+    toast('Profil mis à jour !');
+  }catch(e){
+    setBtnLoading(btn,false,'',origText);
+    msg.textContent='Erreur réseau. Vérifiez votre connexion.';
+  }
+}
+async function changePwd(){
+  const p1=document.getElementById('newPwd').value;
+  const p2=document.getElementById('newPwd2').value;
+  const msg=document.getElementById('pwdMsg');
+  msg.style.color='#c0392b';
+  if(!p1||!p2){msg.textContent='Veuillez remplir les deux champs.';return;}
+  if(p1.length<6){msg.textContent='Le mot de passe doit contenir au moins 6 caractères.';return;}
+  if(p1!==p2){msg.textContent='Les deux mots de passe ne correspondent pas.';return;}
+  const btn=event.target;
+  if(btn.disabled) return;
+  const origText=btn.textContent;
+  setBtnLoading(btn,true,'Modification...',origText);
+  try{
+    const{error}=await sb.auth.updateUser({password:p1});
+    setBtnLoading(btn,false,'',origText);
+    if(error){msg.textContent=translateAuthError(error.message);return;}
+    msg.style.color='#2d6a4f';
+    msg.textContent='Mot de passe modifié avec succès !';
+    document.getElementById('newPwd').value='';
+    document.getElementById('newPwd2').value='';
+    toast('Mot de passe modifié !');
+  }catch(e){
+    setBtnLoading(btn,false,'',origText);
+    msg.textContent='Erreur réseau. Vérifiez votre connexion.';
+  }
+}
+</script>
+</body>
+</html>
